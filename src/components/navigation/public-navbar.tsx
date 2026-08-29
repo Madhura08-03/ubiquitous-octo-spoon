@@ -2,7 +2,7 @@
 
 import * as React from "react"
 import Link from "next/link"
-import { Shield, Search, Menu, ArrowRight } from "lucide-react"
+import { Shield, Search, Menu, FileQuestion } from "lucide-react"
 
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
@@ -20,28 +20,38 @@ export interface PublicNavbarProps {
   links?: NavLink[]
   onSearchClick?: () => void
   onLoginClick?: () => void
+  onReportProblemClick?: () => void
   onRegisterClick?: () => void
   className?: string
 }
 
 const DEFAULT_NAV_LINKS: NavLink[] = [
-  { label: "Problems Feed", href: "/feed" },
-  { label: "Projects", href: "/projects" },
-  { label: "Universities", href: "/universities" },
-  { label: "Industry CSR", href: "/industry" },
-  { label: "Government Policy", href: "/government" },
+  { label: "Home", href: "/" },
+  { label: "Challenges", href: "#challenges" },
+  { label: "How It Works", href: "#how-it-works" },
+  { label: "Impact", href: "#impact" },
+  { label: "About", href: "#about" },
 ]
 
 export function PublicNavbar({
-  brandName = "Jharkhand Innovation",
-  tagline = "Societal Collaboration Portal",
+  brandName = "Societal Innovation Portal",
+  tagline = "Government of Jharkhand",
   links = DEFAULT_NAV_LINKS,
   onSearchClick,
   onLoginClick,
+  onReportProblemClick,
   onRegisterClick,
   className,
 }: PublicNavbarProps) {
   const [isOpen, setIsOpen] = React.useState(false)
+
+  const handleReportOrRegister = () => {
+    if (onReportProblemClick) {
+      onReportProblemClick()
+    } else if (onRegisterClick) {
+      onRegisterClick()
+    }
+  }
 
   return (
     <header
@@ -56,8 +66,8 @@ export function PublicNavbar({
           <div className="flex size-9 items-center justify-center rounded-lg bg-primary text-primary-foreground shadow-xs transition-transform group-hover:scale-105">
             <Shield className="size-5 text-lime-400" />
           </div>
-          <div className="flex flex-col">
-            <span className="text-sm font-bold tracking-tight text-foreground group-hover:text-primary transition-colors">
+          <div className="flex flex-col text-left">
+            <span className="text-sm font-bold tracking-tight text-foreground group-hover:text-primary transition-colors leading-tight">
               {brandName}
             </span>
             <span className="text-[10px] font-medium text-muted-foreground leading-none">
@@ -70,7 +80,7 @@ export function PublicNavbar({
         <nav className="hidden md:flex items-center gap-6 text-sm font-medium">
           {links.map((link) => (
             <Link
-              key={link.href}
+              key={link.label}
               href={link.href}
               className="text-muted-foreground hover:text-foreground transition-colors relative py-1"
             >
@@ -104,17 +114,17 @@ export function PublicNavbar({
             onClick={onLoginClick}
             className="text-xs font-semibold"
           >
-            Portal Login
+            Login
           </Button>
 
           <Button
             variant="default"
             size="sm"
-            onClick={onRegisterClick}
-            className="text-xs font-semibold gap-1.5 shadow-xs bg-primary hover:bg-primary/90"
+            onClick={handleReportOrRegister}
+            className="text-xs font-bold gap-1.5 shadow-sm bg-lime-500 text-slate-950 hover:bg-lime-400 hover:text-slate-950"
           >
-            <span>Submit Solution</span>
-            <ArrowRight className="size-3.5" />
+            <FileQuestion className="size-3.5" />
+            <span>Report a Problem</span>
           </Button>
         </div>
 
@@ -155,7 +165,7 @@ export function PublicNavbar({
                 </p>
                 {links.map((link) => (
                   <Link
-                    key={link.href}
+                    key={link.label}
                     href={link.href}
                     onClick={() => setIsOpen(false)}
                     className="text-sm font-medium text-foreground hover:text-primary py-1.5 transition-colors"
@@ -178,14 +188,14 @@ export function PublicNavbar({
                 </Button>
                 <Button
                   variant="default"
-                  className="w-full text-xs font-semibold justify-center gap-1.5"
+                  className="w-full text-xs font-bold justify-center gap-1.5 bg-lime-500 text-slate-950 hover:bg-lime-400"
                   onClick={() => {
                     setIsOpen(false)
-                    onRegisterClick?.()
+                    handleReportOrRegister()
                   }}
                 >
-                  <span>Submit Solution</span>
-                  <ArrowRight className="size-3.5" />
+                  <FileQuestion className="size-3.5" />
+                  <span>Report a Problem</span>
                 </Button>
               </div>
             </SheetContent>
