@@ -3,7 +3,7 @@
 import * as React from "react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
-import { Shield, Search, Menu, User, Sparkles, LogOut, Activity } from "lucide-react"
+import { Shield, Search, Menu, User, Sparkles, LogOut, Activity, GraduationCap } from "lucide-react"
 
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
@@ -137,6 +137,17 @@ export function PublicNavbar({
 
             {authUser ? (
               <div className="flex items-center gap-2">
+                {authUser.role === "university" && (
+                  <Link
+                    href="/university/dashboard"
+                    className="inline-flex items-center gap-1.5 text-xs font-bold text-primary hover:text-primary/80 py-1 px-2.5 rounded-lg bg-primary/10 border border-primary/20"
+                    title="University Dashboard"
+                  >
+                    <GraduationCap className="size-3.5 text-primary" />
+                    <span className="hidden md:inline">University Dashboard</span>
+                  </Link>
+                )}
+
                 <Link
                   href="/onboarding"
                   className="inline-flex items-center gap-1.5 text-xs font-semibold text-muted-foreground hover:text-foreground py-1 px-2 rounded-lg hover:bg-muted"
@@ -244,6 +255,16 @@ export function PublicNavbar({
                         <User className="size-4 text-primary" />
                         <span>My Profile ({authUser.name})</span>
                       </Link>
+                      {authUser.role === "university" && (
+                        <Link
+                          href="/university/dashboard"
+                          onClick={() => setIsOpen(false)}
+                          className="text-sm font-bold text-primary hover:text-primary/80 py-1.5 transition-colors flex items-center gap-2"
+                        >
+                          <GraduationCap className="size-4 text-primary" />
+                          <span>University Dashboard</span>
+                        </Link>
+                      )}
                       <Link
                         href="/my-problems"
                         onClick={() => setIsOpen(false)}

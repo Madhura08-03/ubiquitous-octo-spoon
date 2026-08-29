@@ -1,6 +1,7 @@
 "use client"
 
 import * as React from "react"
+import Link from "next/link"
 import {
   User,
   Shield,
@@ -17,10 +18,12 @@ import {
   EyeOff,
   MapPin,
   HelpCircle,
+  LayoutDashboard,
 } from "lucide-react"
 
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs"
 import { Badge } from "@/components/ui/badge"
+import { buttonVariants } from "@/components/ui/button"
 import { StatusBadge } from "@/components/ui/status-badge"
 import {
   UserProfile,
@@ -126,10 +129,24 @@ export function ProfileDetails({ profile, isOwner = true }: ProfileDetailsProps)
           {university && (
             <div className="space-y-6">
               <div className="rounded-2xl border border-border bg-card p-6 space-y-4">
-                <h3 className="text-sm font-bold text-foreground flex items-center gap-2">
-                  <Landmark className="size-4 text-primary" />
-                  <span>Academic Overview</span>
-                </h3>
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-2 border-b border-border">
+                  <h3 className="text-sm font-bold text-foreground flex items-center gap-2">
+                    <Landmark className="size-4 text-primary" />
+                    <span>Academic Overview</span>
+                  </h3>
+
+                  <Link
+                    href="/university/dashboard"
+                    className={buttonVariants({
+                      variant: "default",
+                      size: "sm",
+                      className: "text-xs font-bold gap-1.5 bg-primary text-primary-foreground hover:bg-primary/90 shadow-xs",
+                    })}
+                  >
+                    <LayoutDashboard className="size-3.5" />
+                    <span>Launch University Dashboard &rarr;</span>
+                  </Link>
+                </div>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
                   <div>
                     <span className="text-muted-foreground">Institution Name</span>
