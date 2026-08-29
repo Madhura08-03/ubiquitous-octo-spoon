@@ -12,6 +12,7 @@ import {
   Bookmark,
   BookmarkCheck,
   Megaphone,
+  CheckCircle2,
   Droplets,
   Zap,
   Sprout,
@@ -74,6 +75,12 @@ export function ProblemCard({
     () => false
   )
 
+  const isAlreadyReported = React.useSyncExternalStore(
+    (cb) => problemService.subscribe(cb),
+    () => problemService.hasUserReportedProblem(problem.id),
+    () => false
+  )
+
   const DomainIcon = DOMAIN_ICONS[problem.domain] || HelpCircle
 
   const handleSaveClick = (e: React.MouseEvent) => {
@@ -107,6 +114,13 @@ export function ProblemCard({
     const currentUser = authService.getCurrentUser()
     if (!currentUser) {
       onRequireAuth?.("report")
+      return
+    }
+
+    if (isAlreadyReported) {
+      toast.info("Already Reported", {
+        description: "You have already logged a community report for this challenge.",
+      })
       return
     }
 
@@ -232,21 +246,28 @@ export function ProblemCard({
           </div>
         </div>
 
-        {/* 4. Action Buttons Footer */}
+        {/* 4. Action Buttons Footer with Report State */}
         <div className="pt-3 border-t border-border flex items-center justify-between gap-2">
           <div className="flex items-center gap-1.5">
-            {/* Report Action ("I am also experiencing this problem") */}
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              onClick={handleReportClick}
-              className="text-xs h-8 px-2.5 font-bold gap-1 text-primary border-primary/30 hover:bg-primary/10"
-              title="Report that you are also experiencing this problem"
-            >
-              <Megaphone className="size-3.5" />
-              <span>Report</span>
-            </Button>
+            {/* Report Action / Reported State Indicator */}
+            {isAlreadyReported ? (
+              <span className="inline-flex items-center gap-1 text-[11px] font-bold text-emerald-700 dark:text-emerald-300 bg-emerald-500/10 border border-emerald-500/30 px-2.5 py-1 rounded-md">
+                <CheckCircle2 className="size-3 text-emerald-600 dark:text-emerald-400" />
+                <span>Reported</span>
+              </span>
+            ) : (
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={handleReportClick}
+                className="text-xs h-8 px-2.5 font-bold gap-1 text-primary border-primary/30 hover:bg-primary/10"
+                title="Report that you are also experiencing this problem"
+              >
+                <Megaphone className="size-3.5" />
+                <span>Report</span>
+              </Button>
+            )}
 
             {/* Save / Bookmark Action */}
             <Button

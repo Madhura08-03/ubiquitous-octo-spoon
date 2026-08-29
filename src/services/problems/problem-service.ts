@@ -5,11 +5,13 @@ import {
   ProblemStats,
   CommunityReportPayload,
   CommunityReport,
+  UserReportRecord,
 } from "./problem-types"
 import { MOCK_PROBLEMS } from "@/data/problems/problem-data"
 
 const SAVED_STORAGE_KEY = "jh_innovation_saved_problems"
 const OVERRIDES_STORAGE_KEY = "jh_innovation_problem_overrides"
+const USER_REPORTS_STORAGE_KEY = "jh_innovation_user_community_reports"
 
 function isClient(): boolean {
   return typeof window !== "undefined"
@@ -237,7 +239,6 @@ export class MockProblemService {
     const all = await this.getAllProblems()
     const others = all.filter((p) => p.id !== current.id)
 
-    // Score relatedness: same domain (+3), same district (+2)
     const scored = others.map((p) => {
       let score = 0
       if (p.domain === current.domain) score += 3
@@ -317,8 +318,52 @@ export class MockProblemService {
     return all.filter((p) => savedIds.includes(p.id))
   }
 
-  // ==================== COMMUNITY REPORT SUBMISSION ====================
+  // ==================== COMMUNITY REPORT SUBMISSION & DUPLICATE PREVENTION ====================
 
+  private getStoredUserReports(): UserReportRecord[] {
+    if (!isClient()) return []
+    try {
+      const data = sessionStorage.getItem(USER_REPORTS_STORAGE_KEY)
+      return data ? JSON.parse(data) : []
+    } catch {
+      return []
+    }
+  }
+
+  private saveUserReports(reports: UserReportRecord[]): void {
+    if (!isClient()) return
+    sessionStorage.setItem(USER_REPORTS_STORAGE_KEY, JSON.stringify(reports))
+  }
+
+  /**
+   * Checks whether the current user has already submitted a co-report for the specified problem.
+   */
+  hasUserReportedProblem(problemId: string): boolean {
+    if (!isClient()) return false
+    const userReports = this.getStoredUserReports()
+    return userReports.some((r) => r.problemId === problemId)
+  }
+
+  /**
+   * Returns an array of problem IDs co-reported by the current user.
+   */
+  getUserReportedProblemIds(): string[] {
+    if (!isClient()) return []
+    const userReports = this.getStoredUserReports()
+    return userReports.map((r) => r.problemId)
+  }
+
+  /**
+   * Retrieves the current user's private community reporting history.
+   */
+  async getUserReports(): Promise<UserReportRecord[]> {
+    await this.simulateDelay(80)
+    return this.getStoredUserReports()
+  }
+
+  /**
+   * Submits a community co-report for an existing problem with duplicate prevention.
+   */
   async submitCommunityReport(
     problemId: string,
     payload: CommunityReportPayload
@@ -330,15 +375,26 @@ export class MockProblemService {
       throw new Error(`Problem with ID ${problemId} not found.`)
     }
 
+    if (this.hasUserReportedProblem(base.id)) {
+      throw new Error("You have already reported this problem.")
+    }
+
+    const reportId = `rep_${Date.now()}_${Math.floor(Math.random() * 1000)}`
+    const nowIso = new Date().toISOString()
+
     const newReport: CommunityReport = {
-      id: `rep_${Date.now()}_${Math.floor(Math.random() * 1000)}`,
+      id: reportId,
       problemId: base.id,
       location: payload.location,
       mediaUrl: payload.mediaUrl,
+      mediaType: payload.mediaType,
+      fileName: payload.fileName,
+      fileSize: payload.fileSize,
       note: payload.note,
-      createdAt: new Date().toISOString(),
+      createdAt: nowIso,
     }
 
+    // 1. Update problem overrides
     const overrides = this.getStoredOverrides()
     const existingForProblem = overrides[base.id] || {}
     const existingReports = existingForProblem.reports || []
@@ -348,6 +404,22 @@ export class MockProblemService {
       reports: [...existingReports, newReport],
     }
 
+    // 2. Record in user's private report history
+    const userReports = this.getStoredUserReports()
+    userReports.unshift({
+      reportId,
+      problemId: base.id,
+      problemTitle: base.title,
+      domain: base.domain,
+      district: base.district,
+      location: payload.location,
+      submittedAt: nowIso,
+      mediaUrl: payload.mediaUrl,
+      mediaType: payload.mediaType,
+      note: payload.note,
+    })
+
+    this.saveUserReports(userReports)
     this.saveOverrides(overrides)
 
     const updatedProblem = this.mergeWithOverrides(base)

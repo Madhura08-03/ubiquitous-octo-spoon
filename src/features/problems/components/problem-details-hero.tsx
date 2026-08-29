@@ -32,6 +32,7 @@ import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { StatusBadge, StatusType } from "@/components/ui/status-badge"
 import { Problem, ProblemDomain } from "@/services/problems/problem-types"
+import { problemService } from "@/services/problems/problem-service"
 
 export interface ProblemDetailsHeroProps {
   problem: Problem
@@ -65,6 +66,12 @@ export function ProblemDetailsHero({
 }: ProblemDetailsHeroProps) {
   const [selectedMediaIndex, setSelectedMediaIndex] = React.useState(0)
   const [imageError, setImageError] = React.useState(false)
+
+  const isAlreadyReported = React.useSyncExternalStore(
+    (cb) => problemService.subscribe(cb),
+    () => problemService.hasUserReportedProblem(problem.id),
+    () => false
+  )
 
   const DomainIcon = DOMAIN_ICONS[problem.domain] || HelpCircle
 
@@ -219,18 +226,25 @@ export function ProblemDetailsHero({
             </div>
           </div>
 
-          {/* Action Buttons Row */}
+          {/* Action Buttons Row with Co-Reported State Awareness */}
           <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 pt-4 border-t border-border">
-            <Button
-              type="button"
-              variant="default"
-              size="default"
-              onClick={onReportClick}
-              className="flex-1 text-xs sm:text-sm font-bold gap-2 bg-primary text-primary-foreground hover:bg-primary/90 shadow-xs"
-            >
-              <Megaphone className="size-4" />
-              <span>Report this problem</span>
-            </Button>
+            {isAlreadyReported ? (
+              <div className="flex-1 flex items-center justify-center gap-1.5 p-2.5 rounded-xl border border-emerald-500/40 bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 text-xs font-bold select-none">
+                <CheckCircle2 className="size-4 shrink-0 text-emerald-600 dark:text-emerald-400" />
+                <span>You reported this problem</span>
+              </div>
+            ) : (
+              <Button
+                type="button"
+                variant="default"
+                size="default"
+                onClick={onReportClick}
+                className="flex-1 text-xs sm:text-sm font-bold gap-2 bg-primary text-primary-foreground hover:bg-primary/90 shadow-xs"
+              >
+                <Megaphone className="size-4" />
+                <span>Report this problem</span>
+              </Button>
+            )}
 
             <Button
               type="button"

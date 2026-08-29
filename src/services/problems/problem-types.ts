@@ -39,6 +39,9 @@ export interface CommunityReport {
   location: string
   coordinates?: string
   mediaUrl?: string
+  mediaType?: "image" | "video"
+  fileName?: string
+  fileSize?: string
   note?: string
   createdAt: string
 }
@@ -121,5 +124,21 @@ export interface ProblemStats {
 export interface CommunityReportPayload {
   location: string
   mediaUrl?: string
+  mediaType?: "image" | "video"
+  fileName?: string
+  fileSize?: string
+  note?: string
+}
+
+export interface UserReportRecord {
+  reportId: string
+  problemId: string
+  problemTitle: string
+  domain: ProblemDomain
+  district: string
+  location: string
+  submittedAt: string
+  mediaUrl?: string
+  mediaType?: "image" | "video"
   note?: string
 }

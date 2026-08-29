@@ -7,6 +7,7 @@ import {
   ArrowLeft,
   Calendar,
   Megaphone,
+  CheckCircle2,
 } from "lucide-react"
 import { toast } from "sonner"
 
@@ -45,6 +46,12 @@ export default function ProblemDetailsPage() {
   const isSaved = React.useSyncExternalStore(
     (cb) => problemService.subscribe(cb),
     () => (problem ? problemService.isProblemSaved(problem.id) : false),
+    () => false
+  )
+
+  const isAlreadyReported = React.useSyncExternalStore(
+    (cb) => problemService.subscribe(cb),
+    () => (problem ? problemService.hasUserReportedProblem(problem.id) : false),
     () => false
   )
 
@@ -284,14 +291,21 @@ export default function ProblemDetailsPage() {
                   </p>
                 </div>
 
-                <Button
-                  type="button"
-                  onClick={handleReportClick}
-                  className="font-bold text-xs sm:text-sm gap-2 bg-primary text-primary-foreground hover:bg-primary/90 shrink-0 shadow-xs"
-                >
-                  <Megaphone className="size-4" />
-                  <span>Report this problem</span>
-                </Button>
+                {isAlreadyReported ? (
+                  <div className="flex items-center gap-1.5 p-2.5 rounded-xl border border-emerald-500/40 bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 text-xs font-bold shrink-0">
+                    <CheckCircle2 className="size-4 text-emerald-600 dark:text-emerald-400" />
+                    <span>You reported this problem</span>
+                  </div>
+                ) : (
+                  <Button
+                    type="button"
+                    onClick={handleReportClick}
+                    className="font-bold text-xs sm:text-sm gap-2 bg-primary text-primary-foreground hover:bg-primary/90 shrink-0 shadow-xs"
+                  >
+                    <Megaphone className="size-4" />
+                    <span>Report this problem</span>
+                  </Button>
+                )}
               </div>
             </section>
 
