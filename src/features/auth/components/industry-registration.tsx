@@ -1,13 +1,14 @@
 "use client"
 
 import * as React from "react"
-import { Building2, Hash, Mail, User, ArrowRight, AlertCircle, Phone, Lock, Eye, EyeOff } from "lucide-react"
+import { Building2, Hash, User, ArrowRight, AlertCircle, Phone, Lock, Eye, EyeOff } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { FileUpload } from "@/components/ui/file-upload"
+import { EmailVerificationField } from "./email-verification-field"
 import { ORGANIZATION_TYPES, INDUSTRY_DOMAINS } from "@/data/auth-data"
 import { authService } from "@/services/auth/auth-service"
 import { AuthUser } from "@/services/auth/auth-types"
@@ -24,6 +25,7 @@ export function IndustryRegistration({
   const [organizationName, setOrganizationName] = React.useState("")
   const [organizationType, setOrganizationType] = React.useState("industry")
   const [officialEmail, setOfficialEmail] = React.useState("")
+  const [isEmailVerified, setIsEmailVerified] = React.useState(false)
   const [mobile, setMobile] = React.useState("")
   const [contactPerson, setContactPerson] = React.useState("")
   const [domain, setDomain] = React.useState("clean_energy")
@@ -53,6 +55,11 @@ export function IndustryRegistration({
 
     if (!officialEmail.trim() || !officialEmail.includes("@")) {
       setErrorMessage("Please provide a valid corporate or official organization email.")
+      return
+    }
+
+    if (!isEmailVerified) {
+      setErrorMessage("Please verify your Corporate / Official Email address before registering.")
       return
     }
 
@@ -185,6 +192,22 @@ export function IndustryRegistration({
         </div>
       </div>
 
+      {/* Corporate Email Verification */}
+      <EmailVerificationField
+        label="Corporate / Official Email"
+        placeholder="e.g. csr.jharkhand@tatasteel.com"
+        email={officialEmail}
+        onEmailChange={setOfficialEmail}
+        isVerified={isEmailVerified}
+        onVerifiedChange={(verified) => {
+          setIsEmailVerified(verified)
+          if (verified) setErrorMessage(null)
+        }}
+        disabled={isLoading}
+        required
+        helperText="Official company domain email required for organization verification."
+      />
+
       {/* Reg Number (CIN/GSTIN) & Industry Focus (2-Column) */}
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
         <div className="space-y-1.5">
@@ -233,30 +256,8 @@ export function IndustryRegistration({
         </div>
       </div>
 
-      {/* Official Email & Contact Person (2-Column) */}
+      {/* Authorized Contact & Mobile (2-Column) */}
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-        <div className="space-y-1.5">
-          <label className="text-xs font-semibold text-foreground">
-            Official Corporate Email <span className="text-destructive">*</span>
-          </label>
-          <div className="relative">
-            <Input
-              type="email"
-              value={officialEmail}
-              onChange={(e) => {
-                setOfficialEmail(e.target.value)
-                setErrorMessage(null)
-              }}
-              placeholder="e.g. csr.jharkhand@tatasteel.com"
-              className="pl-9 text-xs"
-              disabled={isLoading}
-            />
-            <div className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground pointer-events-none">
-              <Mail className="size-4" />
-            </div>
-          </div>
-        </div>
-
         <div className="space-y-1.5">
           <label className="text-xs font-semibold text-foreground">
             Authorized CSR Representative <span className="text-destructive">*</span>
@@ -274,6 +275,25 @@ export function IndustryRegistration({
             />
             <div className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground pointer-events-none">
               <User className="size-4" />
+            </div>
+          </div>
+        </div>
+
+        <div className="space-y-1.5">
+          <label className="text-xs font-semibold text-foreground">
+            Contact Phone Number <span className="text-muted-foreground text-[10px] font-normal">(Optional)</span>
+          </label>
+          <div className="relative">
+            <Input
+              type="tel"
+              value={mobile}
+              onChange={(e) => setMobile(e.target.value)}
+              placeholder="e.g. 9835011111"
+              className="pl-9 text-xs font-mono"
+              disabled={isLoading}
+            />
+            <div className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground pointer-events-none">
+              <Phone className="size-4" />
             </div>
           </div>
         </div>
@@ -340,26 +360,6 @@ export function IndustryRegistration({
             >
               {showConfirmPassword ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
             </button>
-          </div>
-        </div>
-      </div>
-
-      {/* Mobile Contact */}
-      <div className="space-y-1.5">
-        <label className="text-xs font-semibold text-foreground">
-          Contact Phone Number <span className="text-muted-foreground text-[10px] font-normal">(Optional)</span>
-        </label>
-        <div className="relative">
-          <Input
-            type="tel"
-            value={mobile}
-            onChange={(e) => setMobile(e.target.value)}
-            placeholder="e.g. 9835011111"
-            className="pl-9 text-xs font-mono"
-            disabled={isLoading}
-          />
-          <div className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground pointer-events-none">
-            <Phone className="size-4" />
           </div>
         </div>
       </div>

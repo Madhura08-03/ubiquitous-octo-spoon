@@ -1,12 +1,13 @@
 "use client"
 
 import * as React from "react"
-import { Landmark, Hash, Mail, User, Phone, ArrowRight, AlertCircle, Lock, Eye, EyeOff } from "lucide-react"
+import { Landmark, Hash, User, Phone, ArrowRight, AlertCircle, Lock, Eye, EyeOff } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { FileUpload } from "@/components/ui/file-upload"
+import { EmailVerificationField } from "./email-verification-field"
 import { authService } from "@/services/auth/auth-service"
 import { AuthUser } from "@/services/auth/auth-types"
 
@@ -22,6 +23,7 @@ export function UniversityRegistration({
   const [universityName, setUniversityName] = React.useState("")
   const [institutionCode, setInstitutionCode] = React.useState("")
   const [officialEmail, setOfficialEmail] = React.useState("")
+  const [isEmailVerified, setIsEmailVerified] = React.useState(false)
   const [contactPerson, setContactPerson] = React.useState("")
   const [mobile, setMobile] = React.useState("")
   const [password, setPassword] = React.useState("")
@@ -49,6 +51,11 @@ export function UniversityRegistration({
 
     if (!officialEmail.trim() || !officialEmail.includes("@")) {
       setErrorMessage("Please provide a valid official institution email address.")
+      return
+    }
+
+    if (!isEmailVerified) {
+      setErrorMessage("Please verify your official institutional email address before registering.")
       return
     }
 
@@ -148,51 +155,43 @@ export function UniversityRegistration({
         </div>
       </div>
 
-      {/* Institution AISHE Code & Official Email (2-Column) */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-        <div className="space-y-1.5">
-          <label className="text-xs font-semibold text-foreground">
-            Govt AISHE / Institution Code <span className="text-destructive">*</span>
-          </label>
-          <div className="relative">
-            <Input
-              value={institutionCode}
-              onChange={(e) => {
-                setInstitutionCode(e.target.value)
-                setErrorMessage(null)
-              }}
-              placeholder="e.g. U-0270"
-              className="pl-9 text-xs font-mono"
-              disabled={isLoading}
-            />
-            <div className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground pointer-events-none">
-              <Hash className="size-4" />
-            </div>
-          </div>
-        </div>
-
-        <div className="space-y-1.5">
-          <label className="text-xs font-semibold text-foreground">
-            Official Institution Email <span className="text-destructive">*</span>
-          </label>
-          <div className="relative">
-            <Input
-              type="email"
-              value={officialEmail}
-              onChange={(e) => {
-                setOfficialEmail(e.target.value)
-                setErrorMessage(null)
-              }}
-              placeholder="e.g. registrar@bitmesra.ac.in"
-              className="pl-9 text-xs"
-              disabled={isLoading}
-            />
-            <div className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground pointer-events-none">
-              <Mail className="size-4" />
-            </div>
+      {/* Institution AISHE Code */}
+      <div className="space-y-1.5">
+        <label className="text-xs font-semibold text-foreground">
+          Govt AISHE / Institution Code <span className="text-destructive">*</span>
+        </label>
+        <div className="relative">
+          <Input
+            value={institutionCode}
+            onChange={(e) => {
+              setInstitutionCode(e.target.value)
+              setErrorMessage(null)
+            }}
+            placeholder="e.g. U-0270"
+            className="pl-9 text-xs font-mono"
+            disabled={isLoading}
+          />
+          <div className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground pointer-events-none">
+            <Hash className="size-4" />
           </div>
         </div>
       </div>
+
+      {/* Official Institutional Email Verification */}
+      <EmailVerificationField
+        label="Official Institutional Email"
+        placeholder="e.g. registrar@bitmesra.ac.in"
+        email={officialEmail}
+        onEmailChange={setOfficialEmail}
+        isVerified={isEmailVerified}
+        onVerifiedChange={(verified) => {
+          setIsEmailVerified(verified)
+          if (verified) setErrorMessage(null)
+        }}
+        disabled={isLoading}
+        required
+        helperText="Official university domain email required for institutional authentication."
+      />
 
       {/* Contact Person & Phone (2-Column) */}
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">

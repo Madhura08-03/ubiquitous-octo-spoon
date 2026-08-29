@@ -1,13 +1,14 @@
 "use client"
 
 import * as React from "react"
-import { User, Mail, Hash, ArrowRight, AlertCircle, Phone, Lock, Eye, EyeOff } from "lucide-react"
+import { User, Hash, ArrowRight, AlertCircle, Phone, Lock, Eye, EyeOff } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { FileUpload } from "@/components/ui/file-upload"
+import { EmailVerificationField } from "./email-verification-field"
 import { JHARKHAND_UNIVERSITIES } from "@/data/auth-data"
 import { authService } from "@/services/auth/auth-service"
 import { AuthUser } from "@/services/auth/auth-types"
@@ -24,6 +25,7 @@ export function StudentRegistration({
   const [fullName, setFullName] = React.useState("")
   const [mobile, setMobile] = React.useState("")
   const [email, setEmail] = React.useState("")
+  const [isEmailVerified, setIsEmailVerified] = React.useState(false)
   const [university, setUniversity] = React.useState("")
   const [registrationNumber, setRegistrationNumber] = React.useState("")
   const [password, setPassword] = React.useState("")
@@ -45,7 +47,12 @@ export function StudentRegistration({
     }
 
     if (!email.trim() || !email.includes("@")) {
-      setErrorMessage("Please provide a valid college or personal email address.")
+      setErrorMessage("A valid college or personal email address is required.")
+      return
+    }
+
+    if (!isEmailVerified) {
+      setErrorMessage("Please verify your student email address before registering.")
       return
     }
 
@@ -151,6 +158,22 @@ export function StudentRegistration({
         </div>
       </div>
 
+      {/* Student Email Verification Component */}
+      <EmailVerificationField
+        label="Student / Institutional Email"
+        placeholder="e.g. aakash@bitmesra.ac.in"
+        email={email}
+        onEmailChange={setEmail}
+        isVerified={isEmailVerified}
+        onVerifiedChange={(verified) => {
+          setIsEmailVerified(verified)
+          if (verified) setErrorMessage(null)
+        }}
+        disabled={isLoading}
+        required
+        helperText="Verification code will be sent to confirm student identity."
+      />
+
       {/* University Selection Dropdown */}
       <div className="space-y-1.5">
         <label className="text-xs font-semibold text-foreground">
@@ -176,30 +199,8 @@ export function StudentRegistration({
         </Select>
       </div>
 
-      {/* College Email & Reg Number (2-Column) */}
+      {/* Student Reg Number & Mobile (2-Column) */}
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-        <div className="space-y-1.5">
-          <label className="text-xs font-semibold text-foreground">
-            College / Personal Email <span className="text-destructive">*</span>
-          </label>
-          <div className="relative">
-            <Input
-              type="email"
-              value={email}
-              onChange={(e) => {
-                setEmail(e.target.value)
-                setErrorMessage(null)
-              }}
-              placeholder="e.g. aakash@bitmesra.ac.in"
-              className="pl-9 text-xs"
-              disabled={isLoading}
-            />
-            <div className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground pointer-events-none">
-              <Mail className="size-4" />
-            </div>
-          </div>
-        </div>
-
         <div className="space-y-1.5">
           <label className="text-xs font-semibold text-foreground">
             Student Reg / Roll No. <span className="text-destructive">*</span>
@@ -217,6 +218,25 @@ export function StudentRegistration({
             />
             <div className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground pointer-events-none">
               <Hash className="size-4" />
+            </div>
+          </div>
+        </div>
+
+        <div className="space-y-1.5">
+          <label className="text-xs font-semibold text-foreground">
+            Mobile Number <span className="text-muted-foreground text-[10px] font-normal">(Optional)</span>
+          </label>
+          <div className="relative">
+            <Input
+              type="tel"
+              value={mobile}
+              onChange={(e) => setMobile(e.target.value)}
+              placeholder="e.g. 9835012345"
+              className="pl-9 text-xs font-mono"
+              disabled={isLoading}
+            />
+            <div className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground pointer-events-none">
+              <Phone className="size-4" />
             </div>
           </div>
         </div>
@@ -287,26 +307,6 @@ export function StudentRegistration({
         </div>
       </div>
 
-      {/* Mobile Contact Number */}
-      <div className="space-y-1.5">
-        <label className="text-xs font-semibold text-foreground">
-          Mobile Number <span className="text-muted-foreground text-[10px] font-normal">(Optional)</span>
-        </label>
-        <div className="relative">
-          <Input
-            type="tel"
-            value={mobile}
-            onChange={(e) => setMobile(e.target.value)}
-            placeholder="e.g. 9835012345"
-            className="pl-9 text-xs font-mono"
-            disabled={isLoading}
-          />
-          <div className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground pointer-events-none">
-            <Phone className="size-4" />
-          </div>
-        </div>
-      </div>
-
       {/* Student ID Card Upload (Reusing Task 2 FileUpload) */}
       <div className="space-y-1.5 pt-1">
         <label className="text-xs font-semibold text-foreground">
@@ -317,6 +317,7 @@ export function StudentRegistration({
           description="PDF, JPG, or PNG (Max size: 5MB)"
           accept=".pdf,.jpg,.jpeg,.png"
           maxSizeMB={5}
+          required
           onFilesSelected={(files) => {
             if (files && files.length > 0) {
               setUploadedFile({ name: files[0].name, size: files[0].size })
