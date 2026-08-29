@@ -67,7 +67,6 @@ export default function LandingPage() {
       <PublicNavbar
         onSearchClick={handleSearchClick}
         onLoginClick={handleLoginClick}
-        onReportProblemClick={handleReportProblem}
       />
 
       <main className="flex-1">
@@ -99,7 +98,7 @@ export default function LandingPage() {
         <ImpactStory />
 
         {/* 10. Final Call to Action */}
-        <FinalCta onReportProblem={handleReportProblem} />
+        <FinalCta />
       </main>
 
       {/* 11. Institutional Footer */}

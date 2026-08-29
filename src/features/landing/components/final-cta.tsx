@@ -2,15 +2,11 @@
 
 import * as React from "react"
 import Link from "next/link"
-import { ArrowRight, ShieldCheck, FileQuestion } from "lucide-react"
+import { ArrowRight, ShieldCheck, Sparkles } from "lucide-react"
 
-import { Button, buttonVariants } from "@/components/ui/button"
+import { buttonVariants } from "@/components/ui/button"
 
-export interface FinalCtaProps {
-  onReportProblem?: () => void
-}
-
-export function FinalCta({ onReportProblem }: FinalCtaProps) {
+export function FinalCta() {
   return (
     <section className="relative overflow-hidden bg-[oklch(0.18_0.015_240)] text-white py-16 sm:py-24 border-b border-slate-800">
       {/* Subtle Ambient Backdrop */}
@@ -34,32 +30,35 @@ export function FinalCta({ onReportProblem }: FinalCtaProps) {
 
         <div className="space-y-3 max-w-3xl mx-auto">
           <h2 className="text-3xl sm:text-5xl font-black tracking-tight text-white leading-tight">
-            Have a Problem That Needs a Solution?
+            Empower Your Community Through Innovation
           </h2>
           <p className="text-base sm:text-lg text-slate-300 leading-relaxed">
-            Your ground observation could become a university research team&apos;s next breakthrough prototype and receive corporate CSR sponsorship.
+            Discover active grassroots challenges, contribute solutions, or partner across Jharkhand&apos;s higher education and research network.
           </p>
         </div>
 
         <div className="flex flex-wrap items-center justify-center gap-4 pt-2">
-          <Button
-            size="lg"
-            onClick={onReportProblem}
-            className="bg-lime-500 text-slate-950 hover:bg-lime-400 font-bold px-8 shadow-lg shadow-lime-500/20 text-sm gap-2"
+          <Link
+            href="/feed"
+            className={buttonVariants({
+              variant: "default",
+              size: "lg",
+              className: "bg-lime-500 text-slate-950 hover:bg-lime-400 font-bold px-8 shadow-lg shadow-lime-500/20 text-sm gap-2",
+            })}
           >
-            <FileQuestion className="size-4" />
-            <span>Report a Problem</span>
-          </Button>
+            <Sparkles className="size-4" />
+            <span>Explore Societal Challenges</span>
+          </Link>
 
           <Link
-            href="#challenges"
+            href="/register"
             className={buttonVariants({
               variant: "outline",
               size: "lg",
               className: "border-slate-700 bg-slate-900/80 text-white hover:bg-slate-800 hover:text-white text-sm",
             })}
           >
-            <span>Explore Challenges</span>
+            <span>Join Innovation Ecosystem</span>
           </Link>
         </div>
 

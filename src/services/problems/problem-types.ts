@@ -33,6 +33,24 @@ export interface ProblemMedia {
   caption?: string
 }
 
+export interface EvidenceMetadata {
+  type: "photo" | "video"
+  mediaUrl: string
+  capturedAt: string
+  latitude: number
+  longitude: number
+  fileName?: string
+  fileSize?: string
+}
+
+export interface ProblemLocation {
+  latitude?: number
+  longitude?: number
+  locality: string
+  district: string
+  state: "Jharkhand"
+}
+
 export interface CommunityReport {
   id: string
   problemId: string
@@ -40,6 +58,7 @@ export interface CommunityReport {
   coordinates?: string
   mediaUrl?: string
   mediaType?: "image" | "video"
+  evidence?: EvidenceMetadata
   fileName?: string
   fileSize?: string
   note?: string
@@ -54,6 +73,8 @@ export interface Problem {
   domain: ProblemDomain
   district: DistrictJharkhand | string
   location: string
+  latitude?: number
+  longitude?: number
   priority: ProblemPriority
   reportCount: number
   duration: string
@@ -123,6 +144,7 @@ export interface ProblemStats {
 
 export interface CommunityReportPayload {
   location: string
+  evidence?: EvidenceMetadata
   mediaUrl?: string
   mediaType?: "image" | "video"
   fileName?: string
@@ -138,6 +160,7 @@ export interface UserReportRecord {
   district: string
   location: string
   submittedAt: string
+  evidence?: EvidenceMetadata
   mediaUrl?: string
   mediaType?: "image" | "video"
   note?: string
@@ -149,9 +172,12 @@ export interface CreateProblemPayload {
   domain: ProblemDomain
   district: string
   location: string
+  latitude?: number
+  longitude?: number
   priority?: ProblemPriority
   duration?: string
   peopleAffected?: string
+  evidence?: EvidenceMetadata
   mediaUrl?: string
   mediaType?: "image" | "video"
   mediaCaption?: string

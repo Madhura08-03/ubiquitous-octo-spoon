@@ -3,7 +3,7 @@
 import * as React from "react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
-import { Shield, Search, Menu, FileQuestion, User, Sparkles, LogOut } from "lucide-react"
+import { Shield, Search, Menu, User, Sparkles, LogOut } from "lucide-react"
 
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
@@ -55,8 +55,6 @@ export function PublicNavbar({
   links = DEFAULT_NAV_LINKS,
   onSearchClick,
   onLoginClick,
-  onReportProblemClick,
-  onRegisterClick,
   className,
 }: PublicNavbarProps) {
   const router = useRouter()
@@ -72,18 +70,6 @@ export function PublicNavbar({
       return null
     }
   }, [rawSession])
-
-  const handleReportOrRegister = () => {
-    if (onReportProblemClick) {
-      onReportProblemClick()
-    } else if (onRegisterClick) {
-      onRegisterClick()
-    } else if (authUser) {
-      router.push("/report")
-    } else {
-      router.push("/register")
-    }
-  }
 
   const handleLogin = () => {
     if (onLoginClick) {
@@ -181,25 +167,25 @@ export function PublicNavbar({
                 </Button>
               </div>
             ) : (
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={handleLogin}
-                className="text-xs font-semibold"
-              >
-                Login
-              </Button>
+              <div className="flex items-center gap-2">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={handleLogin}
+                  className="text-xs font-semibold"
+                >
+                  Login
+                </Button>
+                <Button
+                  variant="default"
+                  size="sm"
+                  onClick={() => router.push("/register")}
+                  className="text-xs font-bold shadow-sm bg-lime-500 text-slate-950 hover:bg-lime-400 hover:text-slate-950"
+                >
+                  Register
+                </Button>
+              </div>
             )}
-
-            <Button
-              variant="default"
-              size="sm"
-              onClick={handleReportOrRegister}
-              className="text-xs font-bold gap-1.5 shadow-sm bg-lime-500 text-slate-950 hover:bg-lime-400 hover:text-slate-950"
-            >
-              <FileQuestion className="size-3.5" />
-              <span>Report a Problem</span>
-            </Button>
           </div>
 
           {/* Mobile Navigation Trigger */}
@@ -282,29 +268,41 @@ export function PublicNavbar({
                 </div>
 
                 <div className="mt-auto pt-6 border-t border-border flex flex-col gap-2.5">
-                  {!authUser && (
+                  {!authUser ? (
+                    <>
+                      <Button
+                        variant="outline"
+                        className="w-full text-xs font-semibold justify-center"
+                        onClick={() => {
+                          setIsOpen(false)
+                          handleLogin()
+                        }}
+                      >
+                        Portal Login
+                      </Button>
+                      <Button
+                        variant="default"
+                        className="w-full text-xs font-bold justify-center shadow-sm bg-lime-500 text-slate-950 hover:bg-lime-400"
+                        onClick={() => {
+                          setIsOpen(false)
+                          router.push("/register")
+                        }}
+                      >
+                        Register Account
+                      </Button>
+                    </>
+                  ) : (
                     <Button
-                      variant="outline"
-                      className="w-full text-xs font-semibold justify-center"
+                      variant="default"
+                      className="w-full text-xs font-bold justify-center shadow-sm bg-lime-500 text-slate-950 hover:bg-lime-400"
                       onClick={() => {
                         setIsOpen(false)
-                        handleLogin()
+                        router.push("/feed")
                       }}
                     >
-                      Portal Login
+                      Browse Challenges Feed
                     </Button>
                   )}
-                  <Button
-                    variant="default"
-                    className="w-full text-xs font-bold justify-center gap-1.5 bg-lime-500 text-slate-950 hover:bg-lime-400"
-                    onClick={() => {
-                      setIsOpen(false)
-                      handleReportOrRegister()
-                    }}
-                  >
-                    <FileQuestion className="size-3.5" />
-                    <span>Report a Problem</span>
-                  </Button>
                 </div>
               </SheetContent>
             </Sheet>

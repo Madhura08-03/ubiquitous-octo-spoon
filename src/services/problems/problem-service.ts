@@ -19,6 +19,75 @@ function isClient(): boolean {
   return typeof window !== "undefined"
 }
 
+const STOP_WORDS = new Set([
+  "a", "an", "the", "in", "on", "at", "to", "for", "of", "and", "or", "is", "are", "was",
+  "were", "our", "my", "your", "their", "we", "this", "that", "it", "with", "by", "from",
+  "as", "be", "all", "have", "has", "had", "not", "but", "about", "into", "through", "after",
+  "over", "between", "out", "against", "during", "without", "before", "under", "around", "among",
+  "problem", "issue", "village", "town", "people", "area", "facing", "facing", "there"
+])
+
+function extractKeywords(text: string): string[] {
+  if (!text) return []
+  return text
+    .toLowerCase()
+    .replace(/[^a-z0-9\s]/g, " ")
+    .split(/\s+/)
+    .filter((w) => w.length > 2 && !STOP_WORDS.has(w))
+}
+
+export const DISTRICT_COORDINATES: Record<string, { lat: number; lng: number }> = {
+  "Ranchi": { lat: 23.3441, lng: 85.3096 },
+  "Dhanbad": { lat: 23.7957, lng: 86.4304 },
+  "East Singhbhum": { lat: 22.8046, lng: 86.2029 },
+  "West Singhbhum": { lat: 22.5604, lng: 85.8080 },
+  "Bokaro": { lat: 23.6693, lng: 86.1511 },
+  "Hazaribagh": { lat: 23.9925, lng: 85.3637 },
+  "Deoghar": { lat: 24.4826, lng: 86.7001 },
+  "Giridih": { lat: 24.1856, lng: 86.3087 },
+  "Dumka": { lat: 24.2676, lng: 87.2486 },
+  "Palamu": { lat: 24.0416, lng: 84.0722 },
+  "Ramgarh": { lat: 23.6263, lng: 85.5132 },
+  "Saraikela Kharsawan": { lat: 22.7003, lng: 85.9329 },
+  "Chatra": { lat: 24.2091, lng: 84.8718 },
+  "Garhwa": { lat: 24.1594, lng: 83.8055 },
+  "Godda": { lat: 24.8267, lng: 87.2131 },
+  "Gumla": { lat: 23.0428, lng: 84.5414 },
+  "Jamtara": { lat: 23.9632, lng: 86.8028 },
+  "Khunti": { lat: 23.0728, lng: 85.2789 },
+  "Koderma": { lat: 24.4690, lng: 85.5947 },
+  "Latehar": { lat: 23.7436, lng: 84.5028 },
+  "Lohardaga": { lat: 23.4357, lng: 84.6806 },
+  "Pakur": { lat: 24.6340, lng: 87.8488 },
+  "Sahibganj": { lat: 25.2425, lng: 87.6416 },
+  "Simdega": { lat: 22.6144, lng: 84.5074 },
+}
+
+export function calculateDistanceKm(lat1: number, lon1: number, lat2: number, lon2: number): number {
+  const R = 6371 // Earth radius in km
+  const dLat = (lat2 - lat1) * (Math.PI / 180)
+  const dLon = (lon2 - lon1) * (Math.PI / 180)
+  const a =
+    Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+    Math.cos(lat1 * (Math.PI / 180)) * Math.cos(lat2 * (Math.PI / 180)) *
+    Math.sin(dLon / 2) * Math.sin(dLon / 2)
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a))
+  return Math.round(R * c)
+}
+
+export function findNearestDistrict(lat: number, lng: number): string {
+  let nearest = "Ranchi"
+  let minDistance = Infinity
+  for (const [district, coords] of Object.entries(DISTRICT_COORDINATES)) {
+    const dist = calculateDistanceKm(lat, lng, coords.lat, coords.lng)
+    if (dist < minDistance) {
+      minDistance = dist
+      nearest = district
+    }
+  }
+  return nearest
+}
+
 export class MockProblemService {
   private listeners: Set<() => void> = new Set()
 
@@ -90,6 +159,72 @@ export class MockProblemService {
     const newlyCreated = this.getStoredNewProblems()
     const all = [...newlyCreated, ...MOCK_PROBLEMS]
     return all.map((p) => this.mergeWithOverrides(p))
+  }
+
+  /**
+   * Dynamically discovers existing similar problems matching title, description, domain, or district.
+   * Prevents duplicate submissions by offering immediate co-report pathways.
+   */
+  async findSimilarProblems(
+    title: string,
+    description: string,
+    domain?: string,
+    district?: string
+  ): Promise<Problem[]> {
+    await this.simulateDelay(60)
+    const titleKeywords = extractKeywords(title)
+    const descKeywords = extractKeywords(description)
+    const allKeywords = Array.from(new Set([...titleKeywords, ...descKeywords]))
+
+    if (allKeywords.length === 0) return []
+
+    const allProblems = await this.getAllProblems()
+    const scored = allProblems.map((p) => {
+      let score = 0
+      const pTitleKeywords = extractKeywords(p.title)
+      const pDescKeywords = extractKeywords(`${p.description} ${p.originalDescription}`)
+      const pFullKeywords = new Set([...pTitleKeywords, ...pDescKeywords])
+
+      // Title keyword match (+5 points each)
+      for (const kw of titleKeywords) {
+        if (pTitleKeywords.includes(kw)) {
+          score += 5
+        } else if (pDescKeywords.includes(kw)) {
+          score += 3
+        }
+      }
+
+      // Description keyword match (+2 points each)
+      for (const kw of descKeywords) {
+        if (pFullKeywords.has(kw)) {
+          score += 2
+        }
+      }
+
+      // Substring check (+6 points)
+      const pFullText = `${p.title} ${p.description} ${p.originalDescription}`.toLowerCase()
+      if (title.trim().length > 4 && pFullText.includes(title.trim().toLowerCase())) {
+        score += 6
+      }
+
+      // Sector domain match (+3 points)
+      if (domain && domain !== "Other" && p.domain.toLowerCase() === domain.toLowerCase()) {
+        score += 3
+      }
+
+      // District match (+2 points)
+      if (district && p.district.toLowerCase() === district.toLowerCase()) {
+        score += 2
+      }
+
+      return { problem: p, score }
+    })
+
+    return scored
+      .filter((item) => item.score >= 4)
+      .sort((a, b) => b.score - a.score || b.problem.reportCount - a.problem.reportCount)
+      .slice(0, 4)
+      .map((item) => item.problem)
   }
 
   /**
@@ -403,14 +538,19 @@ export class MockProblemService {
     const reportId = `rep_${Date.now()}_${Math.floor(Math.random() * 1000)}`
     const nowIso = new Date().toISOString()
 
+    const mediaUrl = payload.evidence?.mediaUrl || payload.mediaUrl
+    const mediaType: "image" | "video" =
+      payload.evidence?.type === "video" || payload.mediaType === "video" ? "video" : "image"
+
     const newReport: CommunityReport = {
       id: reportId,
       problemId: base.id,
       location: payload.location,
-      mediaUrl: payload.mediaUrl,
-      mediaType: payload.mediaType,
-      fileName: payload.fileName,
-      fileSize: payload.fileSize,
+      evidence: payload.evidence,
+      mediaUrl,
+      mediaType,
+      fileName: payload.evidence?.fileName || payload.fileName,
+      fileSize: payload.evidence?.fileSize || payload.fileSize,
       note: payload.note,
       createdAt: nowIso,
     }
@@ -435,8 +575,9 @@ export class MockProblemService {
       district: base.district,
       location: payload.location,
       submittedAt: nowIso,
-      mediaUrl: payload.mediaUrl,
-      mediaType: payload.mediaType,
+      evidence: payload.evidence,
+      mediaUrl,
+      mediaType,
       note: payload.note,
     })
 
@@ -461,6 +602,9 @@ export class MockProblemService {
     const nowIso = new Date().toISOString()
 
     const fallbackUrl = "https://images.unsplash.com/photo-1542601906990-b4d3fb778b09?q=80&w=1200&auto=format&fit=crop"
+    const mediaUrl = payload.evidence?.mediaUrl || payload.mediaUrl || fallbackUrl
+    const mediaType: "image" | "video" =
+      payload.evidence?.type === "video" || payload.mediaType === "video" ? "video" : "image"
 
     const newProblem: Problem = {
       id: newId,
@@ -470,6 +614,8 @@ export class MockProblemService {
       domain: payload.domain,
       district: payload.district,
       location: payload.location.trim(),
+      latitude: payload.latitude || payload.evidence?.latitude,
+      longitude: payload.longitude || payload.evidence?.longitude,
       priority: payload.priority || "medium",
       reportCount: 1,
       duration: payload.duration || "1-3 months",
@@ -479,10 +625,10 @@ export class MockProblemService {
       createdAt: nowIso,
       media: [
         {
-          type: payload.mediaType || "image",
-          url: payload.mediaUrl || fallbackUrl,
+          type: mediaType,
+          url: mediaUrl,
           alt: payload.title.trim(),
-          caption: payload.mediaCaption || "Initial Community Photographic Documentation",
+          caption: payload.mediaCaption || "Field Evidence Submitted by Community",
         },
       ],
       reports: [
@@ -490,8 +636,9 @@ export class MockProblemService {
           id: `rep_${Date.now()}_${Math.floor(Math.random() * 1000)}`,
           problemId: newId,
           location: payload.location.trim(),
-          mediaUrl: payload.mediaUrl,
-          mediaType: payload.mediaType,
+          evidence: payload.evidence,
+          mediaUrl,
+          mediaType,
           createdAt: nowIso,
           note: "Initial citizen problem registration",
         },
@@ -514,8 +661,9 @@ export class MockProblemService {
       district: newProblem.district,
       location: newProblem.location,
       submittedAt: nowIso,
-      mediaUrl: payload.mediaUrl,
-      mediaType: payload.mediaType,
+      evidence: payload.evidence,
+      mediaUrl,
+      mediaType,
       note: "Initial citizen submission",
     })
     this.saveUserReports(userReports)

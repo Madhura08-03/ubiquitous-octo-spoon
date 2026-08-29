@@ -6,7 +6,6 @@ import { useRouter } from "next/navigation"
 import {
   FileQuestion,
   MapPin,
-  Camera,
   Layers,
   HeartHandshake,
   CheckCircle2,
@@ -16,27 +15,34 @@ import {
   Navigation,
   Loader2,
   AlertCircle,
-  Video,
-  UploadCloud,
-  X,
-  RefreshCw,
   Clock,
   AlertTriangle,
   Lightbulb,
+  ExternalLink,
+  ShieldCheck,
+  Search,
+  Check,
+  Camera,
 } from "lucide-react"
 import { toast } from "sonner"
 
 import { PublicNavbar } from "@/components/navigation/public-navbar"
 import { PublicFooter } from "@/components/navigation/public-footer"
-import { Button } from "@/components/ui/button"
+import { Button, buttonVariants } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { Badge } from "@/components/ui/badge"
 import { ConfirmationDialog } from "@/components/ui/confirmation-dialog"
 import { JHARKHAND_DISTRICTS } from "@/data/profile-data"
-import { ProblemDomain, ProblemPriority, Problem } from "@/services/problems/problem-types"
+import {
+  ProblemDomain,
+  ProblemPriority,
+  Problem,
+  EvidenceMetadata,
+} from "@/services/problems/problem-types"
 import { problemService } from "@/services/problems/problem-service"
 import { authService } from "@/services/auth/auth-service"
+import { LiveEvidenceCapture } from "@/features/problems/components/live-evidence-capture"
 
 const DOMAIN_OPTIONS: ProblemDomain[] = [
   "Water Management",
@@ -72,10 +78,14 @@ const DOMAIN_KEYWORDS: Record<ProblemDomain, string[]> = {
   "Other": [],
 }
 
-export default function NewProblemReportPage() {
+export default function ProblemReportingPage() {
   const router = useRouter()
 
-  // Form fields
+  // Routing Mode: "new" (Path A) or "co_report" (Path B)
+  const [reportMode, setReportMode] = React.useState<"new" | "co_report">("new")
+  const [selectedExistingProblem, setSelectedExistingProblem] = React.useState<Problem | null>(null)
+
+  // Form fields for New Problem (Path A)
   const [title, setTitle] = React.useState("")
   const [description, setDescription] = React.useState("")
   const [domain, setDomain] = React.useState<ProblemDomain>("Water Management")
@@ -84,25 +94,41 @@ export default function NewProblemReportPage() {
   const [priority, setPriority] = React.useState<ProblemPriority>("medium")
   const [duration, setDuration] = React.useState("3-6 months")
   const [peopleAffected, setPeopleAffected] = React.useState("~500 residents")
+  const [evidence, setEvidence] = React.useState<EvidenceMetadata | null>(null)
+
+  // Fields for Co-Reporting (Path B)
+  const [coReportLocation, setCoReportLocation] = React.useState("")
+  const [coReportNote, setCoReportNote] = React.useState("")
+  const [coReportEvidence, setCoReportEvidence] = React.useState<EvidenceMetadata | null>(null)
 
   // Geolocation
   const [gpsDetected, setGpsDetected] = React.useState<string | null>(null)
   const [isDetectingGps, setIsDetectingGps] = React.useState(false)
 
-  // Media
-  const [mediaPreview, setMediaPreview] = React.useState<string | null>(null)
-  const [mediaName, setMediaName] = React.useState<string | null>(null)
-  const [mediaSize, setMediaSize] = React.useState<string | null>(null)
-  const [mediaType, setMediaType] = React.useState<"image" | "video">("image")
-  const fileInputRef = React.useRef<HTMLInputElement>(null)
+  // Similar problems discovery
+  const [similarProblems, setSimilarProblems] = React.useState<Problem[]>([])
+  const [isSearchingSimilar, setIsSearchingSimilar] = React.useState(false)
+  const [dismissedSimilar, setDismissedSimilar] = React.useState(false)
 
   // State controls
   const [errors, setErrors] = React.useState<Record<string, string>>({})
   const [confirmationOpen, setConfirmationOpen] = React.useState(false)
   const [isSubmitting, setIsSubmitting] = React.useState(false)
-  const [submittedProblem, setSubmittedProblem] = React.useState<Problem | null>(null)
+  const [submittedNewProblem, setSubmittedNewProblem] = React.useState<Problem | null>(null)
+  const [submittedCoReportProblem, setSubmittedCoReportProblem] = React.useState<Problem | null>(null)
 
-  // Suggestion heuristic
+  // Auth guard on mount
+  React.useEffect(() => {
+    const user = authService.getCurrentUser()
+    if (!user) {
+      toast.info("Authentication Required", {
+        description: "Please log in or register to report a societal problem to the registry.",
+      })
+      router.replace("/register")
+    }
+  }, [router])
+
+  // Real-time Domain Suggestion Heuristic
   const suggestedDomain = React.useMemo<ProblemDomain | null>(() => {
     const combinedText = `${title} ${description}`.toLowerCase()
     if (combinedText.trim().length < 5) return null
@@ -116,15 +142,30 @@ export default function NewProblemReportPage() {
     return null
   }, [title, description])
 
+  // Live Similar-Problem Search (Debounced)
   React.useEffect(() => {
-    const user = authService.getCurrentUser()
-    if (!user) {
-      toast.info("Authentication Required", {
-        description: "Please log in or register to submit a new societal problem to the registry.",
-      })
-      router.replace("/register")
-    }
-  }, [router])
+    if (reportMode === "co_report" || dismissedSimilar) return
+
+    const timer = setTimeout(async () => {
+      const queryLength = (title.trim() + " " + description.trim()).length
+      if (queryLength < 6) {
+        setSimilarProblems([])
+        return
+      }
+
+      setIsSearchingSimilar(true)
+      try {
+        const matches = await problemService.findSimilarProblems(title, description, domain, district)
+        setSimilarProblems(matches)
+      } catch (err) {
+        console.error("Error searching similar problems", err)
+      } finally {
+        setIsSearchingSimilar(false)
+      }
+    }, 250)
+
+    return () => clearTimeout(timer)
+  }, [title, description, domain, district, reportMode, dismissedSimilar])
 
   const handleDetectGps = () => {
     setIsDetectingGps(true)
@@ -137,20 +178,32 @@ export default function NewProblemReportPage() {
           const lng = position.coords.longitude.toFixed(4)
           const gpsString = `GPS: Lat ${lat}° N, Lng ${lng}° E`
           setGpsDetected(gpsString)
-          if (!location) {
-            setLocation(`${district} District Center`)
+          if (reportMode === "co_report") {
+            if (!coReportLocation && selectedExistingProblem) {
+              setCoReportLocation(`${selectedExistingProblem.location}, ${selectedExistingProblem.district}`)
+            }
+          } else {
+            if (!location) {
+              setLocation(`${district} District Center`)
+            }
           }
           setIsDetectingGps(false)
-          toast.success("GPS Coordinates Detected", {
+          toast.success("GPS Location Acquired", {
             description: `${lat}° N, ${lng}° E`,
           })
         },
         () => {
           const fallbackLat = (23.3441 + (Math.random() - 0.5) * 0.05).toFixed(4)
           const fallbackLng = (85.3096 + (Math.random() - 0.5) * 0.05).toFixed(4)
-          setGpsDetected(`GPS (Regional): Lat ${fallbackLat}° N, Lng ${fallbackLng}° E`)
-          if (!location) {
-            setLocation(`${district} District`)
+          setGpsDetected(`GPS (Estimated): Lat ${fallbackLat}° N, Lng ${fallbackLng}° E`)
+          if (reportMode === "co_report") {
+            if (!coReportLocation && selectedExistingProblem) {
+              setCoReportLocation(selectedExistingProblem.location)
+            }
+          } else {
+            if (!location) {
+              setLocation(`${district} District`)
+            }
           }
           setIsDetectingGps(false)
           toast.info("Estimated Location Detected", {
@@ -165,71 +218,62 @@ export default function NewProblemReportPage() {
     }
   }
 
-  const formatFileSize = (bytes: number): string => {
-    if (bytes < 1024 * 1024) {
-      return `${(bytes / 1024).toFixed(1)} KB`
-    }
-    return `${(bytes / (1024 * 1024)).toFixed(1)} MB`
+  // Switch to Path B (Existing Problem Co-Report)
+  const handleSelectExistingProblemToReport = (prob: Problem) => {
+    setSelectedExistingProblem(prob)
+    setReportMode("co_report")
+    setCoReportLocation(prob.location)
+    setErrors({})
+    window.scrollTo({ top: 120, behavior: "smooth" })
+    toast.info("Switched to Community Co-Report", {
+      description: `You are reporting: "${prob.title}". Your submission will validate this existing challenge.`,
+    })
   }
 
-  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0]
-    if (!file) return
-
-    const isVideo = file.type.startsWith("video")
-    const isImage = file.type.startsWith("image")
-
-    if (!isImage && !isVideo) {
-      setErrors((prev) => ({
-        ...prev,
-        media: "Unsupported file type. Please upload a photo (JPG, PNG, WEBP) or video (MP4, MOV).",
-      }))
-      return
-    }
-
-    const maxBytes = isVideo ? 25 * 1024 * 1024 : 10 * 1024 * 1024
-    if (file.size > maxBytes) {
-      setErrors((prev) => ({
-        ...prev,
-        media: `File size exceeds the allowed limit (${isVideo ? "25MB for video" : "10MB for photos"}).`,
-      }))
-      return
-    }
-
-    setMediaType(isVideo ? "video" : "image")
-    setMediaName(file.name)
-    setMediaSize(formatFileSize(file.size))
-    setErrors((prev) => ({ ...prev, media: "" }))
-
-    const reader = new FileReader()
-    reader.onload = (event) => {
-      setMediaPreview(event.target?.result as string)
-    }
-    reader.readAsDataURL(file)
+  // Return to Path A (New Problem Creation)
+  const handleSwitchToNewProblem = () => {
+    setReportMode("new")
+    setSelectedExistingProblem(null)
+    setDismissedSimilar(true)
+    setErrors({})
   }
 
-  const handleRemoveMedia = () => {
-    setMediaPreview(null)
-    setMediaName(null)
-    setMediaSize(null)
-    if (fileInputRef.current) fileInputRef.current.value = ""
-  }
-
+  // Validation before opening confirmation dialog
   const handleFormSubmitAttempt = (e: React.FormEvent) => {
     e.preventDefault()
-
     const newErrors: Record<string, string> = {}
-    if (!title.trim() || title.trim().length < 8) {
-      newErrors.title = "Problem title must be at least 8 characters long."
-    }
-    if (!description.trim() || description.trim().length < 25) {
-      newErrors.description = "Please provide a detailed description (at least 25 characters)."
-    }
-    if (!location.trim() && !gpsDetected) {
-      newErrors.location = "Please specify the locality, village, or ward."
-    }
-    if (!mediaPreview) {
-      newErrors.media = "Please attach at least one photo or video evidence item."
+
+    if (reportMode === "co_report") {
+      // Path B validation
+      if (!selectedExistingProblem) {
+        newErrors.coReport = "No problem selected for co-reporting."
+      }
+      if (selectedExistingProblem && problemService.hasUserReportedProblem(selectedExistingProblem.id)) {
+        toast.warning("Duplicate Report", {
+          description: "You have already submitted a community report for this problem.",
+        })
+        return
+      }
+      if (!coReportLocation.trim() && !gpsDetected) {
+        newErrors.coReportLocation = "Please specify your locality or detect your GPS position."
+      }
+      if (!coReportEvidence) {
+        newErrors.coReportEvidence = "Evidence required: Please take a live photo or video with GPS."
+      }
+    } else {
+      // Path A validation
+      if (!title.trim() || title.trim().length < 8) {
+        newErrors.title = "Problem title must be at least 8 characters long."
+      }
+      if (!description.trim() || description.trim().length < 25) {
+        newErrors.description = "Please provide a detailed description (at least 25 characters)."
+      }
+      if (!location.trim() && !gpsDetected) {
+        newErrors.location = "Please specify the locality, village, or ward."
+      }
+      if (!evidence) {
+        newErrors.evidence = "Live evidence required: Please capture a live photo or video with GPS."
+      }
     }
 
     if (Object.keys(newErrors).length > 0) {
@@ -241,31 +285,45 @@ export default function NewProblemReportPage() {
     setConfirmationOpen(true)
   }
 
+  // Execute Submission after Confirmation
   const handleExecuteSubmission = async () => {
     setConfirmationOpen(false)
     setIsSubmitting(true)
 
     try {
-      const created = await problemService.createProblem({
-        title: title.trim(),
-        description: description.trim(),
-        domain,
-        district,
-        location: location.trim() || `${district} District`,
-        priority,
-        duration,
-        peopleAffected,
-        mediaUrl: mediaPreview || undefined,
-        mediaType,
-        mediaCaption: mediaName || "Field Observational Evidence",
-      })
-
-      setSubmittedProblem(created)
-      toast.success("Societal Challenge Registered!", {
-        description: `Your problem has been registered with ID: ${created.id}.`,
-      })
-    } catch {
-      toast.error("Failed to register societal problem. Please try again.")
+      if (reportMode === "co_report" && selectedExistingProblem) {
+        // Submit Flow B: Existing problem co-report
+        const updated = await problemService.submitCommunityReport(selectedExistingProblem.id, {
+          location: coReportLocation.trim() || selectedExistingProblem.location,
+          evidence: coReportEvidence || undefined,
+          note: coReportNote.trim() || undefined,
+        })
+        setSubmittedCoReportProblem(updated)
+        toast.success("Community Co-Report Recorded!", {
+          description: `Report count for "${updated.title}" is now ${updated.reportCount}.`,
+        })
+      } else {
+        // Submit Flow A: Create new problem
+        const created = await problemService.createProblem({
+          title: title.trim(),
+          description: description.trim(),
+          domain,
+          district,
+          location: location.trim() || `${district} District`,
+          priority,
+          duration,
+          peopleAffected,
+          evidence: evidence || undefined,
+          mediaCaption: evidence?.fileName || "Live Field Observational Evidence",
+        })
+        setSubmittedNewProblem(created)
+        toast.success("Societal Challenge Registered!", {
+          description: `Your problem has been registered with ID: ${created.id}.`,
+        })
+      }
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : "Failed to submit report. Please try again."
+      toast.error(msg)
     } finally {
       setIsSubmitting(false)
     }
@@ -276,7 +334,7 @@ export default function NewProblemReportPage() {
       <PublicNavbar />
 
       <main className="flex-1 max-w-4xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-12 space-y-8 text-left">
-        {/* Navigation Breadcrumb */}
+        {/* Navigation Breadcrumbs */}
         <div className="flex items-center justify-between">
           <Link
             href="/feed"
@@ -286,13 +344,24 @@ export default function NewProblemReportPage() {
             <span>Back to Challenges</span>
           </Link>
 
-          <span className="text-xs font-mono text-muted-foreground">
-            Flow: New Problem Submission
-          </span>
+          <div className="flex items-center gap-2">
+            <Badge
+              variant="outline"
+              className={
+                reportMode === "co_report"
+                  ? "border-amber-500/30 text-amber-600 dark:text-amber-400 bg-amber-500/10 text-xs font-bold"
+                  : "border-primary/30 text-primary bg-primary/10 text-xs font-bold"
+              }
+            >
+              {reportMode === "co_report" ? "Flow B: Co-Report Existing" : "Flow A: New Societal Challenge"}
+            </Badge>
+          </div>
         </div>
 
-        {submittedProblem ? (
-          /* SUCCESS STATE AFTER SUBMISSION */
+        {/* ========================================================================= */}
+        {/* CASE 1: SUCCESS STATE FOR NEW PROBLEM (FLOW A) */}
+        {/* ========================================================================= */}
+        {submittedNewProblem ? (
           <div className="rounded-2xl border border-emerald-500/40 bg-card p-6 sm:p-10 shadow-lg text-center space-y-6">
             <div className="flex size-16 items-center justify-center rounded-full bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 mx-auto">
               <CheckCircle2 className="size-9" />
@@ -300,29 +369,28 @@ export default function NewProblemReportPage() {
 
             <div className="space-y-2 max-w-xl mx-auto">
               <span className="px-3 py-1 rounded-full text-xs font-bold bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 border border-emerald-500/20">
-                Problem Registered Successfully
+                New Societal Problem Registered
               </span>
               <h1 className="text-2xl sm:text-3xl font-black text-foreground tracking-tight">
-                {submittedProblem.title}
+                {submittedNewProblem.title}
               </h1>
               <p className="text-xs sm:text-sm text-muted-foreground leading-relaxed">
-                Your societal challenge has been assigned reference ID <strong className="font-mono text-foreground">{submittedProblem.id}</strong> and is now queued for district nodal screening and university researcher matching.
+                Your societal challenge has been assigned reference ID <strong className="font-mono text-foreground">{submittedNewProblem.id}</strong> and is now queued for district nodal screening and university researcher matching.
               </p>
             </div>
 
-            {/* Structured Receipt Box */}
             <div className="p-4 sm:p-5 rounded-xl border border-border bg-muted/30 max-w-lg mx-auto text-left space-y-2.5 text-xs">
               <div className="flex justify-between items-center py-1 border-b border-border">
                 <span className="text-muted-foreground">Registry Reference</span>
-                <span className="font-mono font-bold text-foreground">{submittedProblem.id}</span>
+                <span className="font-mono font-bold text-foreground">{submittedNewProblem.id}</span>
               </div>
               <div className="flex justify-between items-center py-1 border-b border-border">
                 <span className="text-muted-foreground">Sector Domain</span>
-                <span className="font-semibold text-foreground">{submittedProblem.domain}</span>
+                <span className="font-semibold text-foreground">{submittedNewProblem.domain}</span>
               </div>
               <div className="flex justify-between items-center py-1 border-b border-border">
                 <span className="text-muted-foreground">Jurisdiction</span>
-                <span className="font-semibold text-foreground">{submittedProblem.location}, {submittedProblem.district}</span>
+                <span className="font-semibold text-foreground">{submittedNewProblem.location}, {submittedNewProblem.district}</span>
               </div>
               <div className="flex justify-between items-center py-1">
                 <span className="text-muted-foreground">Status</span>
@@ -330,11 +398,14 @@ export default function NewProblemReportPage() {
               </div>
             </div>
 
-            {/* Action CTAs */}
             <div className="flex flex-wrap items-center justify-center gap-3 pt-2">
               <Link
-                href={`/problems/${submittedProblem.id}`}
-                className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl text-xs sm:text-sm font-bold bg-primary text-primary-foreground hover:bg-primary/90 shadow-sm"
+                href={`/problems/${submittedNewProblem.id}`}
+                className={buttonVariants({
+                  variant: "default",
+                  size: "default",
+                  className: "text-xs sm:text-sm font-bold gap-2 bg-primary text-primary-foreground hover:bg-primary/90",
+                })}
               >
                 <span>View Problem Details</span>
                 <ArrowRight className="size-4" />
@@ -342,14 +413,245 @@ export default function NewProblemReportPage() {
 
               <Link
                 href="/feed"
-                className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl text-xs sm:text-sm font-semibold border border-border bg-card hover:bg-muted text-foreground"
+                className={buttonVariants({
+                  variant: "outline",
+                  size: "default",
+                  className: "text-xs sm:text-sm font-semibold",
+                })}
               >
                 <span>Explore Challenges Feed</span>
               </Link>
             </div>
           </div>
+        ) : submittedCoReportProblem ? (
+          /* ========================================================================= */
+          /* CASE 2: SUCCESS STATE FOR CO-REPORT (FLOW B) */
+          /* ========================================================================= */
+          <div className="rounded-2xl border border-emerald-500/40 bg-card p-6 sm:p-10 shadow-lg text-center space-y-6">
+            <div className="flex size-16 items-center justify-center rounded-full bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 mx-auto">
+              <CheckCircle2 className="size-9" />
+            </div>
+
+            <div className="space-y-2 max-w-xl mx-auto">
+              <span className="px-3 py-1 rounded-full text-xs font-bold bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 border border-emerald-500/20">
+                Community Co-Report Recorded
+              </span>
+              <h1 className="text-2xl sm:text-3xl font-black text-foreground tracking-tight">
+                {submittedCoReportProblem.title}
+              </h1>
+              <p className="text-xs sm:text-sm text-muted-foreground leading-relaxed">
+                Thank you for validating this existing challenge. Your on-ground evidence has been attached, increasing the community validation metric to <strong className="font-mono text-foreground">{submittedCoReportProblem.reportCount} reports</strong>.
+              </p>
+            </div>
+
+            <div className="p-4 sm:p-5 rounded-xl border border-border bg-muted/30 max-w-lg mx-auto text-left space-y-2.5 text-xs">
+              <div className="flex justify-between items-center py-1 border-b border-border">
+                <span className="text-muted-foreground">Validated Problem</span>
+                <span className="font-semibold text-foreground">{submittedCoReportProblem.title}</span>
+              </div>
+              <div className="flex justify-between items-center py-1 border-b border-border">
+                <span className="text-muted-foreground">Community Impact</span>
+                <span className="font-mono font-bold text-emerald-600 dark:text-emerald-400">
+                  {submittedCoReportProblem.reportCount} total citizen reports
+                </span>
+              </div>
+              <div className="flex justify-between items-center py-1">
+                <span className="text-muted-foreground">Reporting Citizen Status</span>
+                <span className="font-bold text-foreground">Verified On-Ground Contributor ✓</span>
+              </div>
+            </div>
+
+            <div className="flex flex-wrap items-center justify-center gap-3 pt-2">
+              <Link
+                href={`/problems/${submittedCoReportProblem.id}`}
+                className={buttonVariants({
+                  variant: "default",
+                  size: "default",
+                  className: "text-xs sm:text-sm font-bold gap-2 bg-primary text-primary-foreground hover:bg-primary/90",
+                })}
+              >
+                <span>View Updated Problem Page</span>
+                <ArrowRight className="size-4" />
+              </Link>
+
+              <Link
+                href="/feed"
+                className={buttonVariants({
+                  variant: "outline",
+                  size: "default",
+                  className: "text-xs sm:text-sm font-semibold",
+                })}
+              >
+                <span>Browse Challenges Feed</span>
+              </Link>
+            </div>
+          </div>
+        ) : reportMode === "co_report" && selectedExistingProblem ? (
+          /* ========================================================================= */
+          /* CASE 3: PATH B FORM — CO-REPORTING ON AN EXISTING PROBLEM */
+          /* ========================================================================= */
+          <div className="space-y-6">
+            {/* Header */}
+            <div className="relative overflow-hidden rounded-2xl border border-amber-500/30 bg-amber-500/5 p-6 sm:p-8 shadow-xs space-y-3">
+              <div className="flex items-center justify-between flex-wrap gap-2">
+                <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-bold bg-amber-500/10 text-amber-700 dark:text-amber-300 border border-amber-500/30">
+                  <ShieldCheck className="size-3.5" />
+                  <span>Flow B &bull; Co-Report Existing Challenge</span>
+                </div>
+
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={handleSwitchToNewProblem}
+                  className="text-xs h-7 font-semibold"
+                >
+                  Switch to Create New Problem
+                </Button>
+              </div>
+
+              <h1 className="text-2xl sm:text-3xl font-black text-foreground tracking-tight">
+                Report Existing Problem: {selectedExistingProblem.title}
+              </h1>
+
+              <p className="text-xs sm:text-sm text-muted-foreground leading-relaxed">
+                Confirming that your community is also experiencing this known problem boosts its priority for university researchers and district administration without creating a duplicate record.
+              </p>
+            </div>
+
+            <form onSubmit={handleFormSubmitAttempt} className="rounded-2xl border border-border bg-card p-6 sm:p-8 space-y-6 shadow-xs">
+              {/* Existing Problem Summary Card */}
+              <div className="p-4 rounded-xl border border-border bg-muted/40 text-xs space-y-2">
+                <div className="flex items-center justify-between">
+                  <span className="font-bold text-foreground">{selectedExistingProblem.title}</span>
+                  <Badge variant="outline" className="text-[10px] font-semibold border-primary/30 text-primary">
+                    {selectedExistingProblem.domain}
+                  </Badge>
+                </div>
+                <div className="flex items-center justify-between text-muted-foreground text-[11px]">
+                  <span className="flex items-center gap-1">
+                    <MapPin className="size-3 text-primary" />
+                    {selectedExistingProblem.location}, {selectedExistingProblem.district}
+                  </span>
+                  <span className="font-mono font-bold text-foreground">
+                    Current Reports: {selectedExistingProblem.reportCount}
+                  </span>
+                </div>
+              </div>
+
+              {/* 1. Location */}
+              <div className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <label className="text-xs sm:text-sm font-bold text-foreground flex items-center gap-1.5">
+                    <MapPin className="size-4 text-primary" />
+                    <span>Your Locality / Ward *</span>
+                  </label>
+
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={handleDetectGps}
+                    disabled={isDetectingGps}
+                    className="text-[11px] h-7 px-2.5 text-primary border-primary/30 hover:bg-primary/10 gap-1 font-semibold"
+                  >
+                    {isDetectingGps ? (
+                      <Loader2 className="size-3 animate-spin" />
+                    ) : (
+                      <Navigation className="size-3" />
+                    )}
+                    <span>Use Current Location</span>
+                  </Button>
+                </div>
+
+                <Input
+                  value={coReportLocation}
+                  onChange={(e) => {
+                    setCoReportLocation(e.target.value)
+                    if (errors.coReportLocation) setErrors((prev) => ({ ...prev, coReportLocation: "" }))
+                  }}
+                  placeholder="e.g. Ward 4, Near High School"
+                  className="text-xs sm:text-sm bg-background"
+                />
+
+                {gpsDetected && (
+                  <div className="flex items-center gap-1.5 p-2 rounded-md bg-emerald-500/10 border border-emerald-500/30 text-[11px] text-emerald-700 dark:text-emerald-400">
+                    <CheckCircle2 className="size-3.5 shrink-0" />
+                    <span className="font-mono truncate">{gpsDetected}</span>
+                  </div>
+                )}
+
+                {errors.coReportLocation && (
+                  <p className="text-[11px] font-medium text-destructive flex items-center gap-1">
+                    <AlertCircle className="size-3" />
+                    <span>{errors.coReportLocation}</span>
+                  </p>
+                )}
+              </div>
+
+              {/* 2. Live Evidence Capture (No generic file upload!) */}
+              <div className="space-y-2">
+                <label className="text-xs sm:text-sm font-bold text-foreground flex items-center gap-1.5">
+                  <Camera className="size-4 text-primary" />
+                  <span>Live Photo or Video Evidence *</span>
+                </label>
+
+                <LiveEvidenceCapture
+                  selectedDistrict={selectedExistingProblem.district}
+                  onEvidenceChange={(ev) => {
+                    setCoReportEvidence(ev)
+                    if (errors.coReportEvidence) setErrors((prev) => ({ ...prev, coReportEvidence: "" }))
+                  }}
+                  error={errors.coReportEvidence}
+                />
+              </div>
+
+              {/* 3. Optional Citizen Note */}
+              <div className="space-y-1.5">
+                <label className="text-xs font-semibold text-foreground">
+                  Additional Field Observations <span className="text-muted-foreground font-normal">(Optional)</span>
+                </label>
+                <Textarea
+                  value={coReportNote}
+                  onChange={(e) => setCoReportNote(e.target.value)}
+                  placeholder="e.g. Water pressure drops completely during daytime; contamination seems heavier after rain..."
+                  rows={3}
+                  className="text-xs sm:text-sm bg-background resize-none"
+                />
+              </div>
+
+              {/* Submit Footer */}
+              <div className="pt-4 border-t border-border flex flex-col sm:flex-row items-stretch sm:items-center justify-end gap-3">
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="default"
+                  onClick={handleSwitchToNewProblem}
+                  className="text-xs"
+                >
+                  Cancel & Switch to New Problem
+                </Button>
+
+                <Button
+                  type="submit"
+                  size="default"
+                  disabled={isSubmitting}
+                  className="font-bold text-xs sm:text-sm gap-2 bg-primary text-primary-foreground hover:bg-primary/90 shadow-sm"
+                >
+                  {isSubmitting ? (
+                    <Loader2 className="size-4 animate-spin" />
+                  ) : (
+                    <CheckCircle2 className="size-4" />
+                  )}
+                  <span>Submit Co-Report (Count +1)</span>
+                </Button>
+              </div>
+            </form>
+          </div>
         ) : (
-          /* NEW PROBLEM SUBMISSION FORM */
+          /* ========================================================================= */
+          /* CASE 4: PATH A FORM — CREATE A NEW SOCIETAL PROBLEM */
+          /* ========================================================================= */
           <div className="space-y-6">
             {/* Header Hero */}
             <div className="relative overflow-hidden rounded-2xl border border-border bg-card p-6 sm:p-8 shadow-xs">
@@ -380,9 +682,10 @@ export default function NewProblemReportPage() {
                   value={title}
                   onChange={(e) => {
                     setTitle(e.target.value)
+                    setDismissedSimilar(false)
                     if (errors.title) setErrors((prev) => ({ ...prev, title: "" }))
                   }}
-                  placeholder="e.g. Unfiltered groundwater contamination affecting primary school borewells"
+                  placeholder="e.g. Dirty drinking water and pipeline leakage in Ormanjhi village"
                   className="text-xs sm:text-sm bg-background"
                 />
                 {errors.title && (
@@ -393,7 +696,7 @@ export default function NewProblemReportPage() {
                 )}
               </div>
 
-              {/* 2. Problem Description & Dynamic Domain Suggestion */}
+              {/* 2. Problem Description */}
               <div className="space-y-2">
                 <label className="text-xs sm:text-sm font-bold text-foreground flex items-center gap-1.5">
                   <Layers className="size-4 text-primary" />
@@ -403,10 +706,11 @@ export default function NewProblemReportPage() {
                   value={description}
                   onChange={(e) => {
                     setDescription(e.target.value)
+                    setDismissedSimilar(false)
                     if (errors.description) setErrors((prev) => ({ ...prev, description: "" }))
                   }}
-                  placeholder="Describe the exact bottleneck, what symptoms or hazards you observe, how long it has been happening, and what attempts have been made so far..."
-                  rows={5}
+                  placeholder="Describe the specific societal bottleneck, observed symptoms, affected community members, and how long it has persisted..."
+                  rows={4}
                   className="text-xs sm:text-sm bg-background leading-relaxed"
                 />
 
@@ -438,6 +742,109 @@ export default function NewProblemReportPage() {
                   </p>
                 )}
               </div>
+
+              {/* ========================================================================= */}
+              {/* LIVE SIMILAR-PROBLEM DISCOVERY CARD LIST */}
+              {/* ========================================================================= */}
+              {similarProblems.length > 0 && !dismissedSimilar && (
+                <div className="p-4 sm:p-5 rounded-2xl border-2 border-amber-500/40 bg-amber-500/5 space-y-3.5 text-left transition-all">
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="space-y-1">
+                      <div className="flex items-center gap-2 font-bold text-sm text-foreground">
+                        <Search className="size-4 text-amber-600 dark:text-amber-400" />
+                        <span>Similar existing problems found</span>
+                        {isSearchingSimilar && <Loader2 className="size-3 animate-spin text-muted-foreground" />}
+                      </div>
+                      <p className="text-xs text-muted-foreground leading-relaxed">
+                        We found existing problems matching your keywords. Reporting on an existing problem validates community urgency (+1 report) instead of creating a duplicate.
+                      </p>
+                    </div>
+
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => setDismissedSimilar(true)}
+                      className="text-[11px] h-7 text-muted-foreground hover:text-foreground shrink-0"
+                    >
+                      Dismiss Matches
+                    </Button>
+                  </div>
+
+                  <div className="space-y-2.5">
+                    {similarProblems.map((prob) => (
+                      <div
+                        key={prob.id}
+                        className="rounded-xl border border-border bg-card p-3.5 space-y-2.5 shadow-2xs hover:border-primary/40 transition-all"
+                      >
+                        <div className="flex items-start justify-between gap-2">
+                          <div className="space-y-0.5">
+                            <p className="text-xs sm:text-sm font-bold text-foreground">{prob.title}</p>
+                            <p className="text-[11px] text-muted-foreground flex items-center gap-1">
+                              <MapPin className="size-3 text-primary shrink-0" />
+                              <span>{prob.location}, {prob.district}</span>
+                            </p>
+                          </div>
+
+                          <div className="flex items-center gap-1.5 shrink-0">
+                            <Badge variant="outline" className="text-[10px] border-primary/30 text-primary">
+                              {prob.domain}
+                            </Badge>
+                            <Badge
+                              variant="outline"
+                              className={
+                                prob.priority === "critical"
+                                  ? "text-[10px] border-rose-500/30 text-rose-600 bg-rose-500/10 font-bold"
+                                  : "text-[10px] border-border text-muted-foreground"
+                              }
+                            >
+                              {prob.reportCount} reports
+                            </Badge>
+                          </div>
+                        </div>
+
+                        <div className="flex flex-wrap items-center justify-end gap-2 pt-1 border-t border-border/60">
+                          <Link
+                            href={`/problems/${prob.id}`}
+                            target="_blank"
+                            className={buttonVariants({
+                              variant: "ghost",
+                              size: "sm",
+                              className: "text-[11px] h-7 px-2.5 text-muted-foreground hover:text-foreground gap-1",
+                            })}
+                          >
+                            <span>View Problem</span>
+                            <ExternalLink className="size-3" />
+                          </Link>
+
+                          <Button
+                            type="button"
+                            variant="default"
+                            size="sm"
+                            onClick={() => handleSelectExistingProblemToReport(prob)}
+                            className="text-[11px] h-7 px-3 font-bold bg-amber-500 text-slate-950 hover:bg-amber-400 gap-1 shadow-2xs"
+                          >
+                            <Check className="size-3" />
+                            <span>Report This Problem</span>
+                          </Button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+
+                  <div className="pt-1 text-center">
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => setDismissedSimilar(true)}
+                      className="text-xs font-semibold text-primary hover:text-primary/80"
+                    >
+                      None of these match &rarr; Continue Creating New Problem
+                    </Button>
+                  </div>
+                </div>
+              )}
 
               {/* 3. Domain & District Selection */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -526,104 +933,22 @@ export default function NewProblemReportPage() {
                 )}
               </div>
 
-              {/* 5. Photographic & Video Evidence Upload */}
+              {/* 5. Live Photo / Video Evidence (NO ordinary file upload!) */}
               <div className="space-y-2">
                 <label className="text-xs sm:text-sm font-bold text-foreground flex items-center gap-1.5">
                   <Camera className="size-4 text-primary" />
                   <span>Ground Photographic or Video Evidence *</span>
                 </label>
 
-                <input
-                  ref={fileInputRef}
-                  type="file"
-                  accept="image/*,video/*"
-                  className="hidden"
-                  onChange={handleFileUpload}
+                <LiveEvidenceCapture
+                  selectedDistrict={district}
+                  onEvidenceChange={(ev) => {
+                    setEvidence(ev)
+                    if (errors.evidence) setErrors((prev) => ({ ...prev, evidence: "" }))
+                  }}
+                  onUpdateDistrict={(newDist) => setDistrict(newDist)}
+                  error={errors.evidence}
                 />
-
-                {mediaPreview ? (
-                  <div className="relative rounded-xl border border-border overflow-hidden bg-black/5 p-3 flex items-center gap-4">
-                    {mediaType === "image" ? (
-                      /* eslint-disable-next-line @next/next/no-img-element */
-                      <img
-                        src={mediaPreview}
-                        alt="Evidence Preview"
-                        className="size-20 object-cover rounded-lg border border-border shrink-0"
-                      />
-                    ) : (
-                      <div className="size-20 rounded-lg bg-primary/10 flex items-center justify-center text-primary shrink-0">
-                        <Video className="size-10" />
-                      </div>
-                    )}
-
-                    <div className="flex-1 overflow-hidden space-y-1">
-                      <p className="text-xs sm:text-sm font-semibold text-foreground truncate">
-                        {mediaName || "Attached Evidence File"}
-                      </p>
-                      <div className="flex items-center gap-2 text-[11px] text-muted-foreground">
-                        {mediaSize && <span>{mediaSize}</span>}
-                        <Badge variant="outline" className="text-[10px] text-emerald-600 dark:text-emerald-400 border-emerald-500/30">
-                          Ready for submission
-                        </Badge>
-                      </div>
-                    </div>
-
-                    <div className="flex items-center gap-1">
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => fileInputRef.current?.click()}
-                        className="size-8 p-0 text-muted-foreground hover:text-foreground"
-                        title="Replace evidence"
-                      >
-                        <RefreshCw className="size-3.5" />
-                      </Button>
-
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="sm"
-                        onClick={handleRemoveMedia}
-                        className="size-8 p-0 text-muted-foreground hover:text-destructive hover:bg-destructive/10"
-                        title="Remove evidence"
-                      >
-                        <X className="size-4" />
-                      </Button>
-                    </div>
-                  </div>
-                ) : (
-                  <div className="grid grid-cols-2 gap-3">
-                    <Button
-                      type="button"
-                      variant="outline"
-                      size="default"
-                      onClick={() => fileInputRef.current?.click()}
-                      className="h-16 flex flex-col items-center justify-center gap-1 border-dashed hover:border-primary/50 text-xs"
-                    >
-                      <UploadCloud className="size-5 text-primary" />
-                      <span className="font-semibold">Upload Photo Evidence</span>
-                    </Button>
-
-                    <Button
-                      type="button"
-                      variant="outline"
-                      size="default"
-                      onClick={() => fileInputRef.current?.click()}
-                      className="h-16 flex flex-col items-center justify-center gap-1 border-dashed hover:border-primary/50 text-xs"
-                    >
-                      <Video className="size-5 text-primary" />
-                      <span className="font-semibold">Upload Video Clip</span>
-                    </Button>
-                  </div>
-                )}
-
-                {errors.media && (
-                  <p className="text-[11px] font-medium text-destructive flex items-center gap-1">
-                    <AlertCircle className="size-3" />
-                    <span>{errors.media}</span>
-                  </p>
-                )}
               </div>
 
               {/* 6. Impact Parameters */}
@@ -681,7 +1006,11 @@ export default function NewProblemReportPage() {
               <div className="pt-4 border-t border-border flex flex-col sm:flex-row items-stretch sm:items-center justify-end gap-3">
                 <Link
                   href="/feed"
-                  className="inline-flex items-center justify-center px-4 py-2 rounded-xl text-xs font-semibold border border-border bg-card hover:bg-muted text-foreground"
+                  className={buttonVariants({
+                    variant: "outline",
+                    size: "default",
+                    className: "text-xs font-semibold",
+                  })}
                 >
                   Cancel
                 </Link>
@@ -709,9 +1038,17 @@ export default function NewProblemReportPage() {
       <ConfirmationDialog
         open={confirmationOpen}
         onOpenChange={setConfirmationOpen}
-        title="Confirm New Problem Registration"
-        description="You are submitting a new societal challenge into the Government of Jharkhand public innovation registry. This challenge will become accessible to university innovators and district nodal officers."
-        confirmLabel="Confirm & Submit"
+        title={
+          reportMode === "co_report"
+            ? "Confirm Community Co-Report"
+            : "Confirm New Problem Registration"
+        }
+        description={
+          reportMode === "co_report"
+            ? `You are submitting observational evidence to validate "${selectedExistingProblem?.title}". This will increase the community report count for this existing problem.`
+            : "You are registering a brand new societal challenge in the Government of Jharkhand public innovation registry. This challenge will become accessible to university innovators and district nodal officers."
+        }
+        confirmLabel={reportMode === "co_report" ? "Confirm & Submit Co-Report" : "Confirm & Register Problem"}
         cancelLabel="Review Details"
         variant="info"
         isLoading={isSubmitting}

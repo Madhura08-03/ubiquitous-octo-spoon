@@ -4,14 +4,10 @@ import * as React from "react"
 import {
   MapPin,
   Camera,
-  Video,
-  UploadCloud,
   CheckCircle2,
   AlertCircle,
-  X,
   Navigation,
   Loader2,
-  RefreshCw,
   FileCheck2,
 } from "lucide-react"
 import { toast } from "sonner"
@@ -28,8 +24,9 @@ import { ConfirmationDialog } from "@/components/ui/confirmation-dialog"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
-import { Problem } from "@/services/problems/problem-types"
+import { Problem, EvidenceMetadata } from "@/services/problems/problem-types"
 import { problemService } from "@/services/problems/problem-service"
+import { LiveEvidenceCapture } from "./live-evidence-capture"
 
 export interface ReportProblemModalProps {
   problem: Problem | null
@@ -47,16 +44,11 @@ export function ReportProblemModal({
   const [location, setLocation] = React.useState("")
   const [gpsDetected, setGpsDetected] = React.useState<string | null>(null)
   const [isDetectingGps, setIsDetectingGps] = React.useState(false)
-  const [mediaPreview, setMediaPreview] = React.useState<string | null>(null)
-  const [mediaName, setMediaName] = React.useState<string | null>(null)
-  const [mediaSize, setMediaSize] = React.useState<string | null>(null)
-  const [mediaType, setMediaType] = React.useState<"image" | "video">("image")
+  const [evidence, setEvidence] = React.useState<EvidenceMetadata | null>(null)
   const [note, setNote] = React.useState("")
   const [isSubmitting, setIsSubmitting] = React.useState(false)
   const [confirmationOpen, setConfirmationOpen] = React.useState(false)
-  const [errors, setErrors] = React.useState<{ location?: string; media?: string }>({})
-
-  const fileInputRef = React.useRef<HTMLInputElement>(null)
+  const [errors, setErrors] = React.useState<{ location?: string; evidence?: string }>({})
 
   const isAlreadyReported = React.useSyncExternalStore(
     (cb) => problemService.subscribe(cb),
@@ -75,24 +67,23 @@ export function ReportProblemModal({
         (position) => {
           const lat = position.coords.latitude.toFixed(4)
           const lng = position.coords.longitude.toFixed(4)
-          const simulatedLoc = `GPS Telemetry: Lat ${lat}° N, Lng ${lng}° E (${problem.location}, ${problem.district})`
+          const simulatedLoc = "GPS Telemetry: Lat " + lat + "° N, Lng " + lng + "° E (" + problem.location + ", " + problem.district + ")"
           setGpsDetected(simulatedLoc)
           if (!location) {
-            setLocation(`${problem.location}, ${problem.district}`)
+            setLocation(problem.location + ", " + problem.district)
           }
           setIsDetectingGps(false)
           toast.success("GPS Location Acquired", {
-            description: `Coordinates: ${lat}° N, ${lng}° E`,
+            description: "Coordinates: " + lat + "° N, " + lng + "° E",
           })
         },
         () => {
-          // Fallback to simulated high-accuracy regional GPS
           const fallbackLat = (23.3441 + (Math.random() - 0.5) * 0.05).toFixed(4)
           const fallbackLng = (85.3096 + (Math.random() - 0.5) * 0.05).toFixed(4)
-          const fallbackGps = `GPS (Regional): Lat ${fallbackLat}° N, Lng ${fallbackLng}° E (${problem.location}, ${problem.district})`
+          const fallbackGps = "GPS (Regional): Lat " + fallbackLat + "° N, Lng " + fallbackLng + "° E (" + problem.location + ", " + problem.district + ")"
           setGpsDetected(fallbackGps)
           if (!location) {
-            setLocation(`${problem.location}, ${problem.district}`)
+            setLocation(problem.location + ", " + problem.district)
           }
           setIsDetectingGps(false)
           toast.info("Regional Location Detected", {
@@ -102,65 +93,12 @@ export function ReportProblemModal({
         { timeout: 6000, enableHighAccuracy: true }
       )
     } else {
-      const fallbackGps = `GPS (Simulated): Lat 23.3441° N, 85.3096° E (${problem.location}, ${problem.district})`
+      const fallbackGps = "GPS (Simulated): Lat 23.3441° N, 85.3096° E (" + problem.location + ", " + problem.district + ")"
       setGpsDetected(fallbackGps)
       if (!location) {
-        setLocation(`${problem.location}, ${problem.district}`)
+        setLocation(problem.location + ", " + problem.district)
       }
       setIsDetectingGps(false)
-    }
-  }
-
-  const formatFileSize = (bytes: number): string => {
-    if (bytes < 1024 * 1024) {
-      return `${(bytes / 1024).toFixed(1)} KB`
-    }
-    return `${(bytes / (1024 * 1024)).toFixed(1)} MB`
-  }
-
-  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0]
-    if (!file) return
-
-    const isVideo = file.type.startsWith("video")
-    const isImage = file.type.startsWith("image")
-
-    if (!isImage && !isVideo) {
-      setErrors((prev) => ({
-        ...prev,
-        media: "Unsupported file format. Please upload a valid image (JPG, PNG, WEBP) or video (MP4, MOV).",
-      }))
-      return
-    }
-
-    // Size limit: 10MB for image, 25MB for video
-    const maxBytes = isVideo ? 25 * 1024 * 1024 : 10 * 1024 * 1024
-    if (file.size > maxBytes) {
-      setErrors((prev) => ({
-        ...prev,
-        media: `File size exceeds the limit (${isVideo ? "25MB for videos" : "10MB for images"}).`,
-      }))
-      return
-    }
-
-    setMediaType(isVideo ? "video" : "image")
-    setMediaName(file.name)
-    setMediaSize(formatFileSize(file.size))
-    setErrors((prev) => ({ ...prev, media: undefined }))
-
-    const reader = new FileReader()
-    reader.onload = (event) => {
-      setMediaPreview(event.target?.result as string)
-    }
-    reader.readAsDataURL(file)
-  }
-
-  const handleRemoveMedia = () => {
-    setMediaPreview(null)
-    setMediaName(null)
-    setMediaSize(null)
-    if (fileInputRef.current) {
-      fileInputRef.current.value = ""
     }
   }
 
@@ -168,9 +106,7 @@ export function ReportProblemModal({
     if (!isOpen) {
       setLocation("")
       setGpsDetected(null)
-      setMediaPreview(null)
-      setMediaName(null)
-      setMediaSize(null)
+      setEvidence(null)
       setNote("")
       setErrors({})
     }
@@ -188,12 +124,12 @@ export function ReportProblemModal({
     }
 
     const currentLocation = location.trim() || gpsDetected || problem.location
-    const newErrors: { location?: string; media?: string } = {}
+    const newErrors: { location?: string; evidence?: string } = {}
     if (!currentLocation) {
       newErrors.location = "Please specify your location or detect your GPS position."
     }
-    if (!mediaPreview) {
-      newErrors.media = "Evidence required: Please attach at least one photo or video."
+    if (!evidence) {
+      newErrors.evidence = "Live evidence required: Please capture a live photo or video with GPS."
     }
 
     if (Object.keys(newErrors).length > 0) {
@@ -213,15 +149,12 @@ export function ReportProblemModal({
     try {
       const updated = await problemService.submitCommunityReport(problem.id, {
         location: currentLocation,
-        mediaUrl: mediaPreview || undefined,
-        mediaType,
-        fileName: mediaName || undefined,
-        fileSize: mediaSize || undefined,
+        evidence: evidence || undefined,
         note: note.trim() || undefined,
       })
 
       toast.success("Community report submitted", {
-        description: `Your observational report has been recorded. Community reports for "${problem.title}" is now ${updated.reportCount}.`,
+        description: "Your observational report has been recorded. Community reports for \"" + problem.title + "\" is now " + updated.reportCount + ".",
       })
 
       onReportSuccess?.(updated)
@@ -246,7 +179,7 @@ export function ReportProblemModal({
             </div>
             <DialogTitle className="text-lg sm:text-xl font-bold">Report this problem</DialogTitle>
             <DialogDescription className="text-xs sm:text-sm text-muted-foreground leading-relaxed">
-              Are you also experiencing this problem? Add your location and observational evidence to validate and strengthen this community challenge.
+              Are you also experiencing this problem? Add your location and observational live evidence to validate and strengthen this community challenge.
             </DialogDescription>
           </DialogHeader>
 
@@ -338,102 +271,21 @@ export function ReportProblemModal({
                 )}
               </div>
 
-              {/* 2. Evidence Upload Section */}
+              {/* 2. Live Evidence Section (No generic file upload!) */}
               <div className="space-y-2">
                 <label className="text-xs font-bold text-foreground flex items-center gap-1.5">
                   <Camera className="size-3.5 text-primary" />
-                  <span>Evidence Photo or Video *</span>
+                  <span>Live Photo or Video Evidence *</span>
                 </label>
 
-                <input
-                  ref={fileInputRef}
-                  type="file"
-                  accept="image/*,video/*"
-                  className="hidden"
-                  onChange={handleFileUpload}
+                <LiveEvidenceCapture
+                  selectedDistrict={problem.district}
+                  onEvidenceChange={(ev) => {
+                    setEvidence(ev)
+                    if (errors.evidence) setErrors((prev) => ({ ...prev, evidence: undefined }))
+                  }}
+                  error={errors.evidence}
                 />
-
-                {mediaPreview ? (
-                  <div className="relative rounded-xl border border-border overflow-hidden bg-black/5 p-2 flex items-center gap-3">
-                    {mediaType === "image" ? (
-                      /* eslint-disable-next-line @next/next/no-img-element */
-                      <img
-                        src={mediaPreview}
-                        alt="Evidence Preview"
-                        className="size-16 object-cover rounded-lg border border-border shrink-0"
-                      />
-                    ) : (
-                      <div className="size-16 rounded-lg bg-primary/10 flex items-center justify-center text-primary shrink-0">
-                        <Video className="size-8" />
-                      </div>
-                    )}
-
-                    <div className="flex-1 overflow-hidden space-y-0.5">
-                      <p className="text-xs font-semibold text-foreground truncate">{mediaName || "Uploaded Evidence"}</p>
-                      <div className="flex items-center gap-2 text-[10px] text-muted-foreground">
-                        {mediaSize && <span>{mediaSize}</span>}
-                        <span className="text-emerald-600 dark:text-emerald-400 font-medium">
-                          &bull; Ready for verification attachment
-                        </span>
-                      </div>
-                    </div>
-
-                    <div className="flex items-center gap-1">
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => fileInputRef.current?.click()}
-                        className="size-8 p-0 text-muted-foreground hover:text-foreground"
-                        title="Replace file"
-                      >
-                        <RefreshCw className="size-3.5" />
-                      </Button>
-
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="sm"
-                        onClick={handleRemoveMedia}
-                        className="size-8 p-0 text-muted-foreground hover:text-destructive hover:bg-destructive/10"
-                        title="Remove file"
-                      >
-                        <X className="size-4" />
-                      </Button>
-                    </div>
-                  </div>
-                ) : (
-                  <div className="grid grid-cols-2 gap-2">
-                    <Button
-                      type="button"
-                      variant="outline"
-                      size="sm"
-                      onClick={() => fileInputRef.current?.click()}
-                      className="h-14 flex flex-col items-center justify-center gap-1 border-dashed hover:border-primary/50 text-xs"
-                    >
-                      <UploadCloud className="size-4 text-primary" />
-                      <span className="font-semibold">Upload Photo</span>
-                    </Button>
-
-                    <Button
-                      type="button"
-                      variant="outline"
-                      size="sm"
-                      onClick={() => fileInputRef.current?.click()}
-                      className="h-14 flex flex-col items-center justify-center gap-1 border-dashed hover:border-primary/50 text-xs"
-                    >
-                      <Video className="size-4 text-primary" />
-                      <span className="font-semibold">Upload Video</span>
-                    </Button>
-                  </div>
-                )}
-
-                {errors.media && (
-                  <p className="text-[11px] font-medium text-destructive flex items-center gap-1">
-                    <AlertCircle className="size-3" />
-                    <span>{errors.media}</span>
-                  </p>
-                )}
               </div>
 
               {/* 3. Optional Citizen Note */}
