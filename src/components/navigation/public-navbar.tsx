@@ -78,6 +78,10 @@ export function PublicNavbar({
       onReportProblemClick()
     } else if (onRegisterClick) {
       onRegisterClick()
+    } else if (authUser) {
+      router.push("/report")
+    } else {
+      router.push("/register")
     }
   }
 

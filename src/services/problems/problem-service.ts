@@ -6,12 +6,14 @@ import {
   CommunityReportPayload,
   CommunityReport,
   UserReportRecord,
+  CreateProblemPayload,
 } from "./problem-types"
 import { MOCK_PROBLEMS } from "@/data/problems/problem-data"
 
 const SAVED_STORAGE_KEY = "jh_innovation_saved_problems"
 const OVERRIDES_STORAGE_KEY = "jh_innovation_problem_overrides"
 const USER_REPORTS_STORAGE_KEY = "jh_innovation_user_community_reports"
+const NEW_PROBLEMS_STORAGE_KEY = "jh_innovation_newly_created_problems"
 
 function isClient(): boolean {
   return typeof window !== "undefined"
@@ -53,6 +55,21 @@ export class MockProblemService {
     this.notify()
   }
 
+  private getStoredNewProblems(): Problem[] {
+    if (!isClient()) return []
+    try {
+      const data = sessionStorage.getItem(NEW_PROBLEMS_STORAGE_KEY)
+      return data ? JSON.parse(data) : []
+    } catch {
+      return []
+    }
+  }
+
+  private saveNewProblems(problems: Problem[]): void {
+    if (!isClient()) return
+    sessionStorage.setItem(NEW_PROBLEMS_STORAGE_KEY, JSON.stringify(problems))
+  }
+
   private mergeWithOverrides(problem: Problem): Problem {
     const overrides = this.getStoredOverrides()
     const custom = overrides[problem.id]
@@ -67,10 +84,12 @@ export class MockProblemService {
   }
 
   /**
-   * Retrieves all problems with any session overrides applied.
+   * Retrieves all problems including newly created ones with session overrides applied.
    */
   async getAllProblems(): Promise<Problem[]> {
-    return MOCK_PROBLEMS.map((p) => this.mergeWithOverrides(p))
+    const newlyCreated = this.getStoredNewProblems()
+    const all = [...newlyCreated, ...MOCK_PROBLEMS]
+    return all.map((p) => this.mergeWithOverrides(p))
   }
 
   /**
@@ -215,7 +234,9 @@ export class MockProblemService {
     const cleanId = id.trim().toLowerCase()
     const numericPart = cleanId.replace(/[^0-9]/g, "")
 
-    const base = MOCK_PROBLEMS.find((p) => {
+    const all = await this.getAllProblems()
+
+    const base = all.find((p) => {
       if (p.id.toLowerCase() === cleanId) return true
       const pClean = p.id.toLowerCase().replace(/[-_]/g, "")
       const searchClean = cleanId.replace(/[-_]/g, "")
@@ -424,6 +445,83 @@ export class MockProblemService {
 
     const updatedProblem = this.mergeWithOverrides(base)
     return updatedProblem
+  }
+
+  // ==================== NEW PROBLEM CREATION (FLOW A) ====================
+
+  /**
+   * Creates a brand new societal problem in the community registry.
+   */
+  async createProblem(payload: CreateProblemPayload): Promise<Problem> {
+    await this.simulateDelay(350)
+
+    const newlyCreated = this.getStoredNewProblems()
+    const newIndex = MOCK_PROBLEMS.length + newlyCreated.length + 1
+    const newId = `prob_${String(newIndex).padStart(3, "0")}`
+    const nowIso = new Date().toISOString()
+
+    const fallbackUrl = "https://images.unsplash.com/photo-1542601906990-b4d3fb778b09?q=80&w=1200&auto=format&fit=crop"
+
+    const newProblem: Problem = {
+      id: newId,
+      title: payload.title.trim(),
+      description: payload.description.trim(),
+      originalDescription: payload.description.trim(),
+      domain: payload.domain,
+      district: payload.district,
+      location: payload.location.trim(),
+      priority: payload.priority || "medium",
+      reportCount: 1,
+      duration: payload.duration || "1-3 months",
+      durationMonths: 2,
+      peopleAffected: payload.peopleAffected || "~250 residents",
+      status: "submitted",
+      createdAt: nowIso,
+      media: [
+        {
+          type: payload.mediaType || "image",
+          url: payload.mediaUrl || fallbackUrl,
+          alt: payload.title.trim(),
+          caption: payload.mediaCaption || "Initial Community Photographic Documentation",
+        },
+      ],
+      reports: [
+        {
+          id: `rep_${Date.now()}_${Math.floor(Math.random() * 1000)}`,
+          problemId: newId,
+          location: payload.location.trim(),
+          mediaUrl: payload.mediaUrl,
+          mediaType: payload.mediaType,
+          createdAt: nowIso,
+          note: "Initial citizen problem registration",
+        },
+      ],
+      verificationStatus: "under_review",
+      relevanceScore: 95,
+      upvotesCount: 1,
+    }
+
+    newlyCreated.unshift(newProblem)
+    this.saveNewProblems(newlyCreated)
+
+    // Also record in user's private report history
+    const userReports = this.getStoredUserReports()
+    userReports.unshift({
+      reportId: `rep_${Date.now()}`,
+      problemId: newId,
+      problemTitle: newProblem.title,
+      domain: newProblem.domain,
+      district: newProblem.district,
+      location: newProblem.location,
+      submittedAt: nowIso,
+      mediaUrl: payload.mediaUrl,
+      mediaType: payload.mediaType,
+      note: "Initial citizen submission",
+    })
+    this.saveUserReports(userReports)
+
+    this.notify()
+    return newProblem
   }
 
   private simulateDelay(ms: number): Promise<void> {

@@ -2,7 +2,6 @@
 
 import * as React from "react"
 import { useRouter } from "next/navigation"
-import { toast } from "sonner"
 
 import { PublicNavbar } from "@/components/navigation/public-navbar"
 import { PublicFooter } from "@/components/navigation/public-footer"
@@ -17,14 +16,19 @@ import { ImpactStory } from "@/features/landing/components/impact-story"
 import { FinalCta } from "@/features/landing/components/final-cta"
 import { ConfirmationDialog } from "@/components/ui/confirmation-dialog"
 import { CivicChallenge } from "@/data/landing-data"
+import { authService } from "@/services/auth/auth-service"
 
 export default function LandingPage() {
   const router = useRouter()
-  const [reportModalOpen, setReportModalOpen] = React.useState(false)
   const [selectedChallenge, setSelectedChallenge] = React.useState<CivicChallenge | null>(null)
 
   const handleReportProblem = () => {
-    setReportModalOpen(true)
+    const user = authService.getCurrentUser()
+    if (user) {
+      router.push("/report")
+    } else {
+      router.push("/register")
+    }
   }
 
   const handleLoginClick = () => {
@@ -32,17 +36,25 @@ export default function LandingPage() {
   }
 
   const handleSearchClick = () => {
-    toast.info("Search Directives", {
-      description: "Full-text search & GIS mapping filter will activate in the Challenge Discovery phase.",
-    })
+    router.push("/feed")
   }
 
   const handleUniversityClick = () => {
-    router.push("/register")
+    const user = authService.getCurrentUser()
+    if (user) {
+      router.push("/feed")
+    } else {
+      router.push("/register")
+    }
   }
 
   const handleIndustryClick = () => {
-    router.push("/register")
+    const user = authService.getCurrentUser()
+    if (user) {
+      router.push("/feed")
+    } else {
+      router.push("/register")
+    }
   }
 
   const handleViewChallenge = (challenge: CivicChallenge) => {
@@ -93,32 +105,20 @@ export default function LandingPage() {
       {/* 11. Institutional Footer */}
       <PublicFooter />
 
-      {/* Interactive Demonstration Modal for "Report a Problem" */}
-      <ConfirmationDialog
-        open={reportModalOpen}
-        onOpenChange={setReportModalOpen}
-        title="Citizen Problem Reporting Gateway"
-        description="This will launch the structured multi-step civic reporting wizard with geotagging, category classification, and photo evidence upload in Task 5."
-        confirmLabel="Proceed to Reporting Flow"
-        cancelLabel="Close"
-        variant="info"
-        onConfirm={() => {
-          setReportModalOpen(false)
-          router.push("/register")
-        }}
-      />
-
       {/* Interactive Demonstration Modal for Challenge View */}
       {selectedChallenge && (
         <ConfirmationDialog
           open={Boolean(selectedChallenge)}
           onOpenChange={(open) => !open && setSelectedChallenge(null)}
           title={selectedChallenge.title}
-          description={`Location: ${selectedChallenge.district} • Severity: ${selectedChallenge.severity} • Reports: ${selectedChallenge.reportsCount} citizen upvotes. Detailed project brief & student submissions will open in Task 7.`}
-          confirmLabel="Got it"
+          description={`Location: ${selectedChallenge.district} • Severity: ${selectedChallenge.severity} • Reports: ${selectedChallenge.reportsCount} citizen upvotes. Browse the Challenges Feed to view full problem details.`}
+          confirmLabel="View in Challenges Feed"
           cancelLabel="Close"
           variant="info"
-          onConfirm={() => setSelectedChallenge(null)}
+          onConfirm={() => {
+            setSelectedChallenge(null)
+            router.push("/feed")
+          }}
         />
       )}
     </div>

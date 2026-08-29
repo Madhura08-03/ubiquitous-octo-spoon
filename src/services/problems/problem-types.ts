@@ -142,3 +142,17 @@ export interface UserReportRecord {
   mediaType?: "image" | "video"
   note?: string
 }
+
+export interface CreateProblemPayload {
+  title: string
+  description: string
+  domain: ProblemDomain
+  district: string
+  location: string
+  priority?: ProblemPriority
+  duration?: string
+  peopleAffected?: string
+  mediaUrl?: string
+  mediaType?: "image" | "video"
+  mediaCaption?: string
+}
