@@ -1,6 +1,7 @@
 "use client"
 
 import * as React from "react"
+import { useRouter } from "next/navigation"
 import { toast } from "sonner"
 
 import { PublicNavbar } from "@/components/navigation/public-navbar"
@@ -18,6 +19,7 @@ import { ConfirmationDialog } from "@/components/ui/confirmation-dialog"
 import { CivicChallenge } from "@/data/landing-data"
 
 export default function LandingPage() {
+  const router = useRouter()
   const [reportModalOpen, setReportModalOpen] = React.useState(false)
   const [selectedChallenge, setSelectedChallenge] = React.useState<CivicChallenge | null>(null)
 
@@ -26,9 +28,7 @@ export default function LandingPage() {
   }
 
   const handleLoginClick = () => {
-    toast.info("Authentication Portal", {
-      description: "Role-based authentication gateway (Citizen, Student, University, Industry, Government) will be connected in upcoming tasks.",
-    })
+    router.push("/login")
   }
 
   const handleSearchClick = () => {
@@ -38,15 +38,11 @@ export default function LandingPage() {
   }
 
   const handleUniversityClick = () => {
-    toast.info("University Research Gateway", {
-      description: "University faculty mentorship and student team registration module.",
-    })
+    router.push("/register")
   }
 
   const handleIndustryClick = () => {
-    toast.info("Industry CSR Co-Sponsorship", {
-      description: "Corporate CSR grant portal and hardware prototyping sponsorship gateway.",
-    })
+    router.push("/register")
   }
 
   const handleViewChallenge = (challenge: CivicChallenge) => {
@@ -108,7 +104,7 @@ export default function LandingPage() {
         variant="info"
         onConfirm={() => {
           setReportModalOpen(false)
-          toast.success("Problem submission wizard initialized for Task 5 development.")
+          router.push("/register")
         }}
       />
 
