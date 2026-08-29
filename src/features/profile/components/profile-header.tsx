@@ -14,9 +14,10 @@ import {
   Sparkles,
   MapPin,
   Camera,
+  LogOut,
 } from "lucide-react"
 
-import { buttonVariants } from "@/components/ui/button"
+import { Button, buttonVariants } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { StatusBadge } from "@/components/ui/status-badge"
 import {
@@ -26,14 +27,17 @@ import {
   IndustryUserProfile,
 } from "@/services/profile/profile-types"
 import { AvatarUploadModal } from "./avatar-upload-modal"
+import { LogoutDialog } from "@/features/auth/components/logout-dialog"
 
 export interface ProfileHeaderProps {
   profile: UserProfile
   onUpdateAvatar: (avatarUrl: string) => void
+  isOwner?: boolean
 }
 
-export function ProfileHeader({ profile, onUpdateAvatar }: ProfileHeaderProps) {
+export function ProfileHeader({ profile, onUpdateAvatar, isOwner = true }: ProfileHeaderProps) {
   const [avatarModalOpen, setAvatarModalOpen] = React.useState(false)
+  const [logoutModalOpen, setLogoutModalOpen] = React.useState(false)
 
   const roleLabels: Record<string, { label: string; icon: React.ComponentType<{ className?: string }> }> = {
     citizen: { label: "Citizen Contributor", icon: User },
@@ -92,14 +96,16 @@ export function ProfileHeader({ profile, onUpdateAvatar }: ProfileHeaderProps) {
               </div>
             )}
 
-            <button
-              type="button"
-              onClick={() => setAvatarModalOpen(true)}
-              className="absolute -bottom-1 -right-1 flex size-7 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-xs hover:scale-105 transition-transform"
-              aria-label="Upload avatar"
-            >
-              <Camera className="size-3.5" />
-            </button>
+            {isOwner && (
+              <button
+                type="button"
+                onClick={() => setAvatarModalOpen(true)}
+                className="absolute -bottom-1 -right-1 flex size-7 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-xs hover:scale-105 transition-transform"
+                aria-label="Upload avatar"
+              >
+                <Camera className="size-3.5" />
+              </button>
+            )}
           </div>
 
           {/* Profile Name & Metadata */}
@@ -116,12 +122,12 @@ export function ProfileHeader({ profile, onUpdateAvatar }: ProfileHeaderProps) {
               </div>
             </div>
 
-            {/* Sub-headline / District / Joined Date */}
+            {/* General District Location & Joined Date */}
             <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-muted-foreground">
               {profile.district && (
                 <div className="flex items-center gap-1">
                   <MapPin className="size-3.5 text-primary" />
-                  <span>{profile.district}, Jharkhand</span>
+                  <span>{profile.district} District, Jharkhand</span>
                 </div>
               )}
               <span>Joined {profile.joinedDate}</span>
@@ -152,7 +158,7 @@ export function ProfileHeader({ profile, onUpdateAvatar }: ProfileHeaderProps) {
           </div>
         </div>
 
-        {/* Right Side: Points & Edit Action */}
+        {/* Right Side: Points & Actions */}
         <div className="flex flex-row md:flex-col items-center md:items-end justify-between w-full md:w-auto gap-3 pt-2 md:pt-0 border-t md:border-t-0 border-border">
           {/* Points Card */}
           <div className="flex items-center gap-2 px-3.5 py-2 rounded-xl border border-lime-500/30 bg-lime-500/10 text-left">
@@ -175,30 +181,54 @@ export function ProfileHeader({ profile, onUpdateAvatar }: ProfileHeaderProps) {
             </div>
           </div>
 
-          {/* Edit Profile CTA */}
-          <div className="flex items-center gap-2">
-            <Link
-              href="/profile/edit"
-              className={buttonVariants({
-                variant: "outline",
-                size: "sm",
-                className: "text-xs font-semibold gap-1.5",
-              })}
-            >
-              <Edit className="size-3.5" />
-              <span>Edit Profile</span>
-            </Link>
-          </div>
+          {/* Action Buttons (Edit Profile & Logout) */}
+          {isOwner && (
+            <div className="flex items-center gap-2">
+              <Link
+                href="/profile/edit"
+                className={buttonVariants({
+                  variant: "outline",
+                  size: "sm",
+                  className: "text-xs font-semibold gap-1.5",
+                })}
+              >
+                <Edit className="size-3.5" />
+                <span>Edit Profile</span>
+              </Link>
+
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                onClick={() => setLogoutModalOpen(true)}
+                className="text-xs text-muted-foreground hover:text-destructive hover:bg-destructive/10 gap-1.5"
+                title="Log out of account"
+              >
+                <LogOut className="size-3.5" />
+                <span>Logout</span>
+              </Button>
+            </div>
+          )}
         </div>
       </div>
 
       {/* Avatar Modal */}
-      <AvatarUploadModal
-        open={avatarModalOpen}
-        onOpenChange={setAvatarModalOpen}
-        currentAvatarUrl={profile.avatarUrl}
-        onSaveAvatar={onUpdateAvatar}
-      />
+      {isOwner && (
+        <AvatarUploadModal
+          open={avatarModalOpen}
+          onOpenChange={setAvatarModalOpen}
+          currentAvatarUrl={profile.avatarUrl}
+          onSaveAvatar={onUpdateAvatar}
+        />
+      )}
+
+      {/* Logout Confirmation Dialog */}
+      {isOwner && (
+        <LogoutDialog
+          open={logoutModalOpen}
+          onOpenChange={setLogoutModalOpen}
+        />
+      )}
     </div>
   )
 }

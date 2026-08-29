@@ -2,7 +2,7 @@
 
 import * as React from "react"
 import { useRouter } from "next/navigation"
-import { Save, ArrowLeft, Plus, X, AlertCircle } from "lucide-react"
+import { Save, ArrowLeft, Plus, X, AlertCircle, MapPin } from "lucide-react"
 import { toast } from "sonner"
 
 import { Button } from "@/components/ui/button"
@@ -151,7 +151,7 @@ export function ProfileEditForm({ initialProfile }: ProfileEditFormProps) {
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div className="space-y-1.5">
             <label className="text-xs font-semibold text-foreground">
-              Jharkhand District
+              Jharkhand District (Broad Jurisdiction)
             </label>
             <Select value={district} onValueChange={(val) => setDistrict(val || "Ranchi")}>
               <SelectTrigger className="w-full text-xs">
@@ -179,6 +179,14 @@ export function ProfileEditForm({ initialProfile }: ProfileEditFormProps) {
               disabled={isSaving}
             />
           </div>
+        </div>
+
+        {/* Location Privacy Callout */}
+        <div className="flex items-start gap-2 p-3 rounded-xl border border-border bg-muted/20 text-[11px] text-muted-foreground leading-relaxed">
+          <MapPin className="size-3.5 text-primary shrink-0 mt-0.5" />
+          <span>
+            <strong>Location Privacy Protected:</strong> Only your broad district is publicly visible in innovator directories. Precise GPS points belong exclusively to problem reports.
+          </span>
         </div>
 
         <div className="space-y-1.5">

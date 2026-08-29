@@ -2,6 +2,7 @@
 
 import * as React from "react"
 import Link from "next/link"
+import { useRouter } from "next/navigation"
 import { ArrowLeft, UserCheck } from "lucide-react"
 
 import { PublicNavbar } from "@/components/navigation/public-navbar"
@@ -9,17 +10,36 @@ import { PublicFooter } from "@/components/navigation/public-footer"
 import { ProfileEditForm } from "@/features/profile/components/profile-edit-form"
 import { UserProfile } from "@/services/profile/profile-types"
 import { profileService } from "@/services/profile/profile-service"
+import { authService } from "@/services/auth/auth-service"
 
 export default function ProfileEditPage() {
+  const router = useRouter()
   const [profile, setProfile] = React.useState<UserProfile | null>(null)
   const [isLoading, setIsLoading] = React.useState(true)
 
   React.useEffect(() => {
+    const authUser = authService.getCurrentUser()
+    if (!authUser) {
+      router.replace("/login")
+      return
+    }
+
+    let isMounted = true
     profileService.getProfile().then((p) => {
-      setProfile(p)
-      setIsLoading(false)
+      if (isMounted) {
+        if (!p) {
+          router.replace("/login")
+          return
+        }
+        setProfile(p)
+        setIsLoading(false)
+      }
     })
-  }, [])
+
+    return () => {
+      isMounted = false
+    }
+  }, [router])
 
   return (
     <div className="min-h-screen flex flex-col bg-background text-foreground">

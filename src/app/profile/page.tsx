@@ -1,6 +1,7 @@
 "use client"
 
 import * as React from "react"
+import { useRouter } from "next/navigation"
 import { toast } from "sonner"
 
 import { PublicNavbar } from "@/components/navigation/public-navbar"
@@ -10,18 +11,30 @@ import { ProfileCompletionBar } from "@/features/profile/components/profile-comp
 import { ProfileDetails } from "@/features/profile/components/profile-details"
 import { UserProfile, ProfileCompletionResult } from "@/services/profile/profile-types"
 import { profileService } from "@/services/profile/profile-service"
+import { authService } from "@/services/auth/auth-service"
 
 export default function ProfilePage() {
+  const router = useRouter()
   const [profile, setProfile] = React.useState<UserProfile | null>(null)
   const [completion, setCompletion] = React.useState<ProfileCompletionResult | null>(null)
   const [isLoading, setIsLoading] = React.useState(true)
 
   React.useEffect(() => {
+    const authUser = authService.getCurrentUser()
+    if (!authUser) {
+      router.replace("/login")
+      return
+    }
+
     let isMounted = true
     profileService
       .getProfile()
       .then((p) => {
         if (isMounted) {
+          if (!p) {
+            router.replace("/login")
+            return
+          }
           setProfile(p)
           setCompletion(profileService.calculateProfileCompletion(p))
           setIsLoading(false)
@@ -37,7 +50,7 @@ export default function ProfilePage() {
     return () => {
       isMounted = false
     }
-  }, [])
+  }, [router])
 
   const handleUpdateAvatar = async (avatarUrl: string) => {
     try {
@@ -63,14 +76,14 @@ export default function ProfilePage() {
           </div>
         ) : (
           <>
-            {/* 1. Profile Header with Avatar, Role Badge, Points */}
-            <ProfileHeader profile={profile} onUpdateAvatar={handleUpdateAvatar} />
+            {/* 1. Profile Header with Avatar, Role Badge, Points, Logout */}
+            <ProfileHeader profile={profile} onUpdateAvatar={handleUpdateAvatar} isOwner={true} />
 
             {/* 2. Profile Strength / Completion Progress */}
             <ProfileCompletionBar completion={completion} />
 
-            {/* 3. Detailed Profile Sections (Public & Private) */}
-            <ProfileDetails profile={profile} />
+            {/* 3. Detailed Profile Sections (3-Tier Privacy: Public, Private Account, Restricted Verification) */}
+            <ProfileDetails profile={profile} isOwner={true} />
           </>
         )}
       </main>

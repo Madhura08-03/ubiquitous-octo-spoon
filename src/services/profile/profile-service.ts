@@ -7,7 +7,7 @@ import { UserRole } from "../auth/auth-types"
 import { authService } from "../auth/auth-service"
 import { MOCK_PROFILES_BY_ROLE } from "@/data/profile-data"
 
-const PROFILE_STORAGE_KEY = "jh_innovation_user_profile"
+const PROFILE_STORAGE_PREFIX = "jh_innovation_profile_"
 
 function isClient(): boolean {
   return typeof window !== "undefined"
@@ -15,34 +15,48 @@ function isClient(): boolean {
 
 export class MockProfileService {
   /**
-   * Retrieves the current user profile, reading from session storage or matching the active auth session.
+   * Retrieves the user profile for the active session.
    */
-  async getProfile(): Promise<UserProfile> {
+  async getProfile(): Promise<UserProfile | null> {
     await this.simulateDelay(200)
 
+    const authUser = authService.getCurrentUser()
+    if (!authUser) {
+      return null
+    }
+
+    const role: UserRole = authUser.role || "citizen"
+    const storageKey = `${PROFILE_STORAGE_PREFIX}${role}`
+
     if (isClient()) {
-      const stored = sessionStorage.getItem(PROFILE_STORAGE_KEY)
+      const stored = sessionStorage.getItem(storageKey)
       if (stored) {
         try {
-          return JSON.parse(stored) as UserProfile
+          const parsed = JSON.parse(stored) as UserProfile
+          const merged: UserProfile = {
+            ...parsed,
+            id: authUser.id,
+            name: authUser.name || parsed.name,
+            email: authUser.email || parsed.email,
+            mobile: authUser.mobile || parsed.mobile,
+          } as UserProfile
+          return merged
         } catch {
           // fallback to base mock
         }
       }
     }
 
-    const authUser = authService.getCurrentUser()
-    const role: UserRole = (authUser?.role as UserRole) || "citizen"
     const baseMock = MOCK_PROFILES_BY_ROLE[role] || MOCK_PROFILES_BY_ROLE.citizen
 
-    // Merge active auth user credentials if present
+    // Merge active auth user credentials
     const profile: UserProfile = {
       ...baseMock,
-      id: authUser?.id || baseMock.id,
-      name: authUser?.name || baseMock.name,
-      email: authUser?.email || baseMock.email,
-      mobile: authUser?.mobile || baseMock.mobile,
-      role: (authUser?.role as UserRole) || baseMock.role,
+      id: authUser.id,
+      name: authUser.name || baseMock.name,
+      email: authUser.email || baseMock.email,
+      mobile: authUser.mobile || baseMock.mobile,
+      role: baseMock.role,
     } as UserProfile
 
     this.saveProfile(profile)
@@ -53,8 +67,11 @@ export class MockProfileService {
    * Updates fields on the user profile.
    */
   async updateProfile(payload: UpdateProfilePayload): Promise<UserProfile> {
-    await this.simulateDelay(400)
+    await this.simulateDelay(300)
     const current = await this.getProfile()
+    if (!current) {
+      throw new Error("No active authenticated session found.")
+    }
 
     const updated: UserProfile = {
       ...current,
@@ -94,7 +111,7 @@ export class MockProfileService {
 
     // Role-specific Fields
     if (profile.role === "citizen") {
-      checkField("locality", "Panchayat / Locality", 20, Boolean(profile.locality))
+      checkField("locality", "General District Area", 20, Boolean(profile.locality || profile.district))
       checkField("mobileVerified", "Verified Mobile", 15, Boolean(profile.isMobileVerified))
     } else if (profile.role === "student") {
       checkField("university", "University Affiliation", 10, Boolean(profile.university))
@@ -124,7 +141,8 @@ export class MockProfileService {
 
   private saveProfile(profile: UserProfile): void {
     if (isClient()) {
-      sessionStorage.setItem(PROFILE_STORAGE_KEY, JSON.stringify(profile))
+      const storageKey = `${PROFILE_STORAGE_PREFIX}${profile.role}`
+      sessionStorage.setItem(storageKey, JSON.stringify(profile))
     }
   }
 
