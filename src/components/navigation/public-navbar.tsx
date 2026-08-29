@@ -2,11 +2,13 @@
 
 import * as React from "react"
 import Link from "next/link"
-import { Shield, Search, Menu, FileQuestion } from "lucide-react"
+import { useRouter } from "next/navigation"
+import { Shield, Search, Menu, FileQuestion, User, Sparkles } from "lucide-react"
 
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import { Sheet, SheetContent, SheetTrigger, SheetHeader, SheetTitle } from "@/components/ui/sheet"
+import { AuthUser } from "@/services/auth/auth-types"
 
 export interface NavLink {
   label: string
@@ -33,6 +35,19 @@ const DEFAULT_NAV_LINKS: NavLink[] = [
   { label: "About", href: "#about" },
 ]
 
+function subscribe(callback: () => void) {
+  window.addEventListener("storage", callback)
+  return () => window.removeEventListener("storage", callback)
+}
+
+function getSessionSnapshot(): string | null {
+  return sessionStorage.getItem("jh_innovation_auth_session")
+}
+
+function getServerSnapshot(): string | null {
+  return null
+}
+
 export function PublicNavbar({
   brandName = "Societal Innovation Portal",
   tagline = "Government of Jharkhand",
@@ -43,13 +58,32 @@ export function PublicNavbar({
   onRegisterClick,
   className,
 }: PublicNavbarProps) {
+  const router = useRouter()
   const [isOpen, setIsOpen] = React.useState(false)
+
+  const rawSession = React.useSyncExternalStore(subscribe, getSessionSnapshot, getServerSnapshot)
+  const authUser: AuthUser | null = React.useMemo(() => {
+    if (!rawSession) return null
+    try {
+      return JSON.parse(rawSession) as AuthUser
+    } catch {
+      return null
+    }
+  }, [rawSession])
 
   const handleReportOrRegister = () => {
     if (onReportProblemClick) {
       onReportProblemClick()
     } else if (onRegisterClick) {
       onRegisterClick()
+    }
+  }
+
+  const handleLogin = () => {
+    if (onLoginClick) {
+      onLoginClick()
+    } else {
+      router.push("/login")
     }
   }
 
@@ -108,14 +142,37 @@ export function PublicNavbar({
             </Button>
           )}
 
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={onLoginClick}
-            className="text-xs font-semibold"
-          >
-            Login
-          </Button>
+          {authUser ? (
+            <div className="flex items-center gap-2">
+              <Link
+                href="/onboarding"
+                className="inline-flex items-center gap-1.5 text-xs font-semibold text-muted-foreground hover:text-foreground py-1 px-2 rounded-lg hover:bg-muted"
+                title="Onboarding Wizard"
+              >
+                <Sparkles className="size-3 text-lime-600 dark:text-lime-400" />
+                <span className="hidden lg:inline">Onboarding</span>
+              </Link>
+
+              <Link
+                href="/profile"
+                className="inline-flex items-center gap-2 px-3 py-1.5 rounded-xl border border-border bg-card hover:bg-muted text-xs font-bold text-foreground transition-colors shadow-xs"
+              >
+                <div className="flex size-5 items-center justify-center rounded-full bg-primary text-primary-foreground text-[10px]">
+                  <User className="size-3" />
+                </div>
+                <span>{authUser.name.split(" ")[0]}</span>
+              </Link>
+            </div>
+          ) : (
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={handleLogin}
+              className="text-xs font-semibold"
+            >
+              Login
+            </Button>
+          )}
 
           <Button
             variant="default"
@@ -173,19 +230,42 @@ export function PublicNavbar({
                     {link.label}
                   </Link>
                 ))}
+
+                {authUser && (
+                  <>
+                    <Link
+                      href="/profile"
+                      onClick={() => setIsOpen(false)}
+                      className="text-sm font-bold text-foreground hover:text-primary py-1.5 transition-colors flex items-center gap-2 border-t border-border pt-3"
+                    >
+                      <User className="size-4 text-primary" />
+                      <span>My Profile ({authUser.name})</span>
+                    </Link>
+                    <Link
+                      href="/onboarding"
+                      onClick={() => setIsOpen(false)}
+                      className="text-sm font-medium text-muted-foreground hover:text-foreground py-1.5 transition-colors flex items-center gap-2"
+                    >
+                      <Sparkles className="size-4 text-lime-600" />
+                      <span>Onboarding Wizard</span>
+                    </Link>
+                  </>
+                )}
               </div>
 
               <div className="mt-auto pt-6 border-t border-border flex flex-col gap-2.5">
-                <Button
-                  variant="outline"
-                  className="w-full text-xs font-semibold justify-center"
-                  onClick={() => {
-                    setIsOpen(false)
-                    onLoginClick?.()
-                  }}
-                >
-                  Portal Login
-                </Button>
+                {!authUser && (
+                  <Button
+                    variant="outline"
+                    className="w-full text-xs font-semibold justify-center"
+                    onClick={() => {
+                      setIsOpen(false)
+                      handleLogin()
+                    }}
+                  >
+                    Portal Login
+                  </Button>
+                )}
                 <Button
                   variant="default"
                   className="w-full text-xs font-bold justify-center gap-1.5 bg-lime-500 text-slate-950 hover:bg-lime-400"
