@@ -29,6 +29,8 @@ export interface CitizenRegisterPayload {
   fullName: string
   mobile: string
   email?: string
+  password?: string
+  confirmPassword?: string
   about?: string
 }
 
@@ -40,6 +42,8 @@ export interface StudentRegisterPayload {
   registrationNumber: string
   idCardFileName?: string
   idCardFileSize?: number
+  password?: string
+  confirmPassword?: string
   about?: string
 }
 
@@ -50,6 +54,8 @@ export interface UniversityRegisterPayload {
   contactPerson: string
   mobile: string
   documentFileName?: string
+  password?: string
+  confirmPassword?: string
   about?: string
 }
 
@@ -62,6 +68,8 @@ export interface IndustryRegisterPayload {
   domain: string
   registrationNumber: string // CIN / GSTIN
   proofFileName?: string
+  password?: string
+  confirmPassword?: string
   about?: string
 }
 

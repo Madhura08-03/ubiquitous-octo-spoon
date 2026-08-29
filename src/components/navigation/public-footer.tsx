@@ -78,29 +78,29 @@ export function PublicFooter() {
             </p>
             <ul className="space-y-2 text-muted-foreground">
               <li>
-                <span className="hover:text-foreground transition-colors cursor-pointer">
+                <Link href="/register" className="hover:text-foreground transition-colors">
                   Citizen Portal
-                </span>
+                </Link>
               </li>
               <li>
-                <span className="hover:text-foreground transition-colors cursor-pointer">
+                <Link href="/register" className="hover:text-foreground transition-colors">
                   Student Innovators
-                </span>
+                </Link>
               </li>
               <li>
-                <span className="hover:text-foreground transition-colors cursor-pointer">
+                <Link href="/register" className="hover:text-foreground transition-colors">
                   University Research Labs
-                </span>
+                </Link>
               </li>
               <li>
-                <span className="hover:text-foreground transition-colors cursor-pointer">
+                <Link href="/register" className="hover:text-foreground transition-colors">
                   Industry CSR Partners
-                </span>
+                </Link>
               </li>
               <li>
-                <span className="hover:text-foreground transition-colors cursor-pointer">
-                  District Collectorates
-                </span>
+                <Link href="/admin/login" className="hover:text-amber-600 dark:hover:text-amber-400 font-medium transition-colors inline-flex items-center gap-1">
+                  <span>Government / Admin Login &rarr;</span>
+                </Link>
               </li>
             </ul>
           </div>

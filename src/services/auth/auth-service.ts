@@ -49,6 +49,10 @@ export class MockAuthService {
       return { success: false, message: "Please enter your registered mobile/email and password." }
     }
 
+    if (credentials.password.length < 6) {
+      return { success: false, message: "Password must be at least 6 characters." }
+    }
+
     // Role-tailored mock user response
     const assignedRole = credentials.role || (id.includes("@bitmesra") ? "student" : "citizen")
 
@@ -82,7 +86,6 @@ export class MockAuthService {
       return { success: false, message: "Please provide valid Government Official Credentials." }
     }
 
-    // Strict validation for admin demo
     if (password.length < 4) {
       return { success: false, message: "Invalid Government credentials or expired authorization key." }
     }
@@ -111,12 +114,20 @@ export class MockAuthService {
   async registerCitizen(payload: CitizenRegisterPayload): Promise<AuthResponse> {
     await this.simulateDelay(500)
 
-    if (!payload.fullName.trim() || !payload.mobile.trim()) {
-      return { success: false, message: "Full Name and Mobile Number are required." }
+    if (!payload.fullName.trim()) {
+      return { success: false, message: "Full Name is required." }
     }
 
-    if (!/^\d{10}$/.test(payload.mobile.trim())) {
-      return { success: false, message: "Please enter a valid 10-digit mobile number." }
+    if (!payload.mobile.trim() || !/^\d{10}$/.test(payload.mobile.trim())) {
+      return { success: false, message: "A valid 10-digit mobile number is required." }
+    }
+
+    if (!payload.password || payload.password.length < 6) {
+      return { success: false, message: "Password is required and must be at least 6 characters." }
+    }
+
+    if (payload.password !== payload.confirmPassword) {
+      return { success: false, message: "Password and Confirm Password do not match." }
     }
 
     return {
@@ -132,7 +143,6 @@ export class MockAuthService {
   async verifyOtp(payload: OtpVerificationPayload): Promise<AuthResponse> {
     await this.simulateDelay(600)
 
-    // Demo OTP validation: accepts 834001 or any 6-digit code for testing
     if (payload.otp.length !== 6) {
       return { success: false, message: "Please enter the full 6-digit OTP code." }
     }
@@ -159,13 +169,37 @@ export class MockAuthService {
   }
 
   /**
-   * Student registration with College ID upload simulation.
+   * Student registration with College ID upload validation.
    */
   async registerStudent(payload: StudentRegisterPayload): Promise<AuthResponse> {
     await this.simulateDelay(700)
 
-    if (!payload.fullName || !payload.email || !payload.university || !payload.registrationNumber) {
-      return { success: false, message: "Please fill out all required student identification fields." }
+    if (!payload.fullName.trim()) {
+      return { success: false, message: "Full Name is required." }
+    }
+
+    if (!payload.email.trim() || !payload.email.includes("@")) {
+      return { success: false, message: "A valid college or personal email address is required." }
+    }
+
+    if (!payload.university) {
+      return { success: false, message: "Please select your accredited university." }
+    }
+
+    if (!payload.registrationNumber.trim()) {
+      return { success: false, message: "Student Registration / Roll Number is required." }
+    }
+
+    if (!payload.idCardFileName) {
+      return { success: false, message: "Student ID Card is required." }
+    }
+
+    if (!payload.password || payload.password.length < 6) {
+      return { success: false, message: "Password is required and must be at least 6 characters." }
+    }
+
+    if (payload.password !== payload.confirmPassword) {
+      return { success: false, message: "Password and Confirm Password do not match." }
     }
 
     const studentUser: AuthUser = {
@@ -183,18 +217,42 @@ export class MockAuthService {
     return {
       success: true,
       user: studentUser,
-      message: "Student registration submitted. Verification pending with institution nodal officer.",
+      message: "Student verification submitted.",
     }
   }
 
   /**
-   * University Institutional Registration.
+   * University Institutional Registration with mandatory AISHE proof.
    */
   async registerUniversity(payload: UniversityRegisterPayload): Promise<AuthResponse> {
     await this.simulateDelay(700)
 
-    if (!payload.universityName || !payload.institutionCode || !payload.officialEmail || !payload.contactPerson) {
-      return { success: false, message: "University Name, Government Code (AISHE), and Official Email are required." }
+    if (!payload.universityName.trim()) {
+      return { success: false, message: "University Name is required." }
+    }
+
+    if (!payload.institutionCode.trim()) {
+      return { success: false, message: "Government AISHE / Institution Code is required." }
+    }
+
+    if (!payload.officialEmail.trim() || !payload.officialEmail.includes("@")) {
+      return { success: false, message: "Official institution email is required." }
+    }
+
+    if (!payload.contactPerson.trim()) {
+      return { success: false, message: "Nodal Officer / Registrar contact name is required." }
+    }
+
+    if (!payload.documentFileName) {
+      return { success: false, message: "Institutional Authorization Letter / AISHE Proof is required." }
+    }
+
+    if (!payload.password || payload.password.length < 6) {
+      return { success: false, message: "Password is required and must be at least 6 characters." }
+    }
+
+    if (payload.password !== payload.confirmPassword) {
+      return { success: false, message: "Password and Confirm Password do not match." }
     }
 
     const univUser: AuthUser = {
@@ -212,18 +270,46 @@ export class MockAuthService {
     return {
       success: true,
       user: univUser,
-      message: "Institution verification request submitted to Dept. of Higher & Technical Education.",
+      message: "Institution verification pending.",
     }
   }
 
   /**
-   * Industry / CSR Organization Registration.
+   * Industry / CSR Organization Registration with mandatory proof.
    */
   async registerIndustry(payload: IndustryRegisterPayload): Promise<AuthResponse> {
     await this.simulateDelay(700)
 
-    if (!payload.organizationName || !payload.organizationType || !payload.officialEmail || !payload.registrationNumber) {
-      return { success: false, message: "Organization Name, Entity Type, and Corporate Registration Number (CIN/GST) are required." }
+    if (!payload.organizationName.trim()) {
+      return { success: false, message: "Organization Name is required." }
+    }
+
+    if (!payload.organizationType) {
+      return { success: false, message: "Entity classification is required." }
+    }
+
+    if (!payload.officialEmail.trim() || !payload.officialEmail.includes("@")) {
+      return { success: false, message: "Official corporate email is required." }
+    }
+
+    if (!payload.registrationNumber.trim()) {
+      return { success: false, message: "Corporate Registration Number (CIN / GSTIN) is required." }
+    }
+
+    if (!payload.contactPerson.trim()) {
+      return { success: false, message: "Authorized CSR Representative name is required." }
+    }
+
+    if (!payload.proofFileName) {
+      return { success: false, message: "Organization verification proof is required." }
+    }
+
+    if (!payload.password || payload.password.length < 6) {
+      return { success: false, message: "Password is required and must be at least 6 characters." }
+    }
+
+    if (payload.password !== payload.confirmPassword) {
+      return { success: false, message: "Password and Confirm Password do not match." }
     }
 
     const industryUser: AuthUser = {
@@ -241,7 +327,7 @@ export class MockAuthService {
     return {
       success: true,
       user: industryUser,
-      message: "Organization registration submitted for corporate CSR co-sponsorship approval.",
+      message: "Organization verification pending.",
     }
   }
 

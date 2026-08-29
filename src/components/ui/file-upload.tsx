@@ -1,3 +1,5 @@
+"use client"
+
 import * as React from "react"
 import { UploadCloud, FileText, X } from "lucide-react"
 
@@ -37,14 +39,19 @@ export function FileUpload({
   const handleFiles = (files: FileList | null) => {
     if (!files || files.length === 0) return
     const newFiles = Array.from(files)
-    setSelectedFiles(multiple ? (prev) => [...prev, ...newFiles] : newFiles)
+    const updated = multiple ? [...selectedFiles, ...newFiles] : newFiles
+    setSelectedFiles(updated)
     if (onFilesSelected) {
-      onFilesSelected(newFiles)
+      onFilesSelected(updated)
     }
   }
 
   const removeFile = (index: number) => {
-    setSelectedFiles((prev) => prev.filter((_, i) => i !== index))
+    const updated = selectedFiles.filter((_, i) => i !== index)
+    setSelectedFiles(updated)
+    if (onFilesSelected) {
+      onFilesSelected(updated)
+    }
   }
 
   return (

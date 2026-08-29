@@ -41,7 +41,7 @@ export function AdminLoginForm() {
         toast.success("Administrative Authorization Verified", {
           description: `Welcome, ${response.user.name} (${response.user.organization})`,
         })
-        router.push("/")
+        router.push("/admin")
       } else {
         setErrorMessage(response.message || "Invalid Government Administrative Credentials.")
       }
@@ -76,7 +76,7 @@ export function AdminLoginForm() {
       {/* Official ID Field */}
       <div className="space-y-1.5">
         <label className="text-xs font-semibold text-foreground">
-          Government ID / Official Email <span className="text-destructive">*</span>
+          Government Official ID / Official Email <span className="text-destructive">*</span>
         </label>
         <div className="relative">
           <Input
@@ -147,7 +147,7 @@ export function AdminLoginForm() {
         className="w-full text-xs font-bold gap-2 shadow-sm bg-amber-500 text-slate-950 hover:bg-amber-400 font-mono"
       >
         <Shield className="size-4" />
-        <span>Secure Administrative Login</span>
+        <span>Secure Login</span>
       </Button>
 
       {/* Back to normal portal login */}

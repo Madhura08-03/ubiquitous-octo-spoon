@@ -1,7 +1,7 @@
 "use client"
 
 import * as React from "react"
-import { Building2, Hash, Mail, User, ArrowRight, AlertCircle, Phone } from "lucide-react"
+import { Building2, Hash, Mail, User, ArrowRight, AlertCircle, Phone, Lock, Eye, EyeOff } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -28,10 +28,11 @@ export function IndustryRegistration({
   const [contactPerson, setContactPerson] = React.useState("")
   const [domain, setDomain] = React.useState("clean_energy")
   const [registrationNumber, setRegistrationNumber] = React.useState("")
-  const [uploadedFile, setUploadedFile] = React.useState<{ name: string; size: number } | null>({
-    name: "Corporate_CIN_Certificate_of_Incorporation.pdf",
-    size: 420000,
-  })
+  const [password, setPassword] = React.useState("")
+  const [confirmPassword, setConfirmPassword] = React.useState("")
+  const [showPassword, setShowPassword] = React.useState(false)
+  const [showConfirmPassword, setShowConfirmPassword] = React.useState(false)
+  const [uploadedFile, setUploadedFile] = React.useState<{ name: string; size: number } | null>(null)
   const [about, setAbout] = React.useState("")
   const [isLoading, setIsLoading] = React.useState(false)
   const [errorMessage, setErrorMessage] = React.useState<string | null>(null)
@@ -65,6 +66,31 @@ export function IndustryRegistration({
       return
     }
 
+    if (!uploadedFile) {
+      setErrorMessage("Organization verification proof is required.")
+      return
+    }
+
+    if (!password) {
+      setErrorMessage("Password is required.")
+      return
+    }
+
+    if (password.length < 6) {
+      setErrorMessage("Password must be at least 6 characters.")
+      return
+    }
+
+    if (!confirmPassword) {
+      setErrorMessage("Please confirm your password.")
+      return
+    }
+
+    if (password !== confirmPassword) {
+      setErrorMessage("Password and Confirm Password do not match.")
+      return
+    }
+
     setIsLoading(true)
     try {
       const response = await authService.registerIndustry({
@@ -75,7 +101,9 @@ export function IndustryRegistration({
         contactPerson: contactPerson.trim(),
         domain,
         registrationNumber: registrationNumber.trim(),
-        proofFileName: uploadedFile?.name,
+        proofFileName: uploadedFile.name,
+        password,
+        confirmPassword,
         about: about.trim() || undefined,
       })
 
@@ -138,7 +166,10 @@ export function IndustryRegistration({
           </label>
           <Select
             value={organizationType}
-            onValueChange={(val) => setOrganizationType(val || "industry")}
+            onValueChange={(val) => {
+              setOrganizationType(val || "industry")
+              setErrorMessage(null)
+            }}
           >
             <SelectTrigger className="w-full text-xs">
               <SelectValue placeholder="Select Organization Type" />
@@ -163,7 +194,10 @@ export function IndustryRegistration({
           <div className="relative">
             <Input
               value={registrationNumber}
-              onChange={(e) => setRegistrationNumber(e.target.value)}
+              onChange={(e) => {
+                setRegistrationNumber(e.target.value)
+                setErrorMessage(null)
+              }}
               placeholder="e.g. L27100MH1907PLC000260"
               className="pl-9 text-xs font-mono"
               disabled={isLoading}
@@ -180,7 +214,10 @@ export function IndustryRegistration({
           </label>
           <Select
             value={domain}
-            onValueChange={(val) => setDomain(val || "clean_energy")}
+            onValueChange={(val) => {
+              setDomain(val || "clean_energy")
+              setErrorMessage(null)
+            }}
           >
             <SelectTrigger className="w-full text-xs">
               <SelectValue placeholder="Select Domain" />
@@ -206,7 +243,10 @@ export function IndustryRegistration({
             <Input
               type="email"
               value={officialEmail}
-              onChange={(e) => setOfficialEmail(e.target.value)}
+              onChange={(e) => {
+                setOfficialEmail(e.target.value)
+                setErrorMessage(null)
+              }}
               placeholder="e.g. csr.jharkhand@tatasteel.com"
               className="pl-9 text-xs"
               disabled={isLoading}
@@ -224,7 +264,10 @@ export function IndustryRegistration({
           <div className="relative">
             <Input
               value={contactPerson}
-              onChange={(e) => setContactPerson(e.target.value)}
+              onChange={(e) => {
+                setContactPerson(e.target.value)
+                setErrorMessage(null)
+              }}
               placeholder="e.g. Vikramaditya Tata (Head CSR)"
               className="pl-9 text-xs"
               disabled={isLoading}
@@ -232,6 +275,71 @@ export function IndustryRegistration({
             <div className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground pointer-events-none">
               <User className="size-4" />
             </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Password & Confirm Password (2-Column) */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+        <div className="space-y-1.5">
+          <label className="text-xs font-semibold text-foreground">
+            Create Password <span className="text-destructive">*</span>
+          </label>
+          <div className="relative">
+            <Input
+              type={showPassword ? "text" : "password"}
+              value={password}
+              onChange={(e) => {
+                setPassword(e.target.value)
+                setErrorMessage(null)
+              }}
+              placeholder="Min 6 characters"
+              className="pl-9 pr-9 text-xs"
+              disabled={isLoading}
+              autoComplete="new-password"
+            />
+            <div className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground pointer-events-none">
+              <Lock className="size-4" />
+            </div>
+            <button
+              type="button"
+              onClick={() => setShowPassword(!showPassword)}
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground focus:outline-none"
+              aria-label={showPassword ? "Hide password" : "Show password"}
+            >
+              {showPassword ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
+            </button>
+          </div>
+        </div>
+
+        <div className="space-y-1.5">
+          <label className="text-xs font-semibold text-foreground">
+            Confirm Password <span className="text-destructive">*</span>
+          </label>
+          <div className="relative">
+            <Input
+              type={showConfirmPassword ? "text" : "password"}
+              value={confirmPassword}
+              onChange={(e) => {
+                setConfirmPassword(e.target.value)
+                setErrorMessage(null)
+              }}
+              placeholder="Re-enter password"
+              className="pl-9 pr-9 text-xs"
+              disabled={isLoading}
+              autoComplete="new-password"
+            />
+            <div className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground pointer-events-none">
+              <Lock className="size-4" />
+            </div>
+            <button
+              type="button"
+              onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground focus:outline-none"
+              aria-label={showConfirmPassword ? "Hide password" : "Show password"}
+            >
+              {showConfirmPassword ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
+            </button>
           </div>
         </div>
       </div>
@@ -259,16 +367,20 @@ export function IndustryRegistration({
       {/* Proof of Organization Upload */}
       <div className="space-y-1.5 pt-1">
         <label className="text-xs font-semibold text-foreground">
-          Proof of Registration / Incorporation Certificate
+          Proof of Registration / Incorporation Certificate <span className="text-destructive">*</span>
         </label>
         <FileUpload
           label="Upload Incorporation Certificate / CSR-1 Form"
           description="PDF format (Max: 10MB)"
           accept=".pdf"
           maxSizeMB={10}
+          required
           onFilesSelected={(files) => {
-            if (files.length > 0) {
+            if (files && files.length > 0) {
               setUploadedFile({ name: files[0].name, size: files[0].size })
+              setErrorMessage(null)
+            } else {
+              setUploadedFile(null)
             }
           }}
         />

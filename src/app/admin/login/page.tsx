@@ -4,7 +4,7 @@ import { AdminLoginForm } from "@/features/auth/components/admin-login-form"
 
 export const metadata: Metadata = {
   title: "Government Admin Login | Societal Innovation Collaboration Portal",
-  description: "Secure administrative access for Government of Jharkhand nodal officers and district evaluators.",
+  description: "Authorized access for Government of Jharkhand administration and district nodal officers.",
 }
 
 export default function AdminLoginPage() {
@@ -12,7 +12,7 @@ export default function AdminLoginPage() {
     <AuthLayout
       variant="admin"
       title="Government Administration"
-      subtitle="Authorized access for Government of Jharkhand administration and district nodal officers."
+      subtitle="Authorized access for Government of Jharkhand administration."
       backHref="/login"
       backLabel="Back to Portal Login"
     >

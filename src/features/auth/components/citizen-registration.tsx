@@ -1,7 +1,7 @@
 "use client"
 
 import * as React from "react"
-import { User, Mail, ArrowRight, AlertCircle } from "lucide-react"
+import { User, Mail, ArrowRight, AlertCircle, Lock, Eye, EyeOff } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -20,6 +20,10 @@ export function CitizenRegistration({
   const [fullName, setFullName] = React.useState("")
   const [mobile, setMobile] = React.useState("")
   const [email, setEmail] = React.useState("")
+  const [password, setPassword] = React.useState("")
+  const [confirmPassword, setConfirmPassword] = React.useState("")
+  const [showPassword, setShowPassword] = React.useState(false)
+  const [showConfirmPassword, setShowConfirmPassword] = React.useState(false)
   const [about, setAbout] = React.useState("")
   const [isLoading, setIsLoading] = React.useState(false)
   const [errorMessage, setErrorMessage] = React.useState<string | null>(null)
@@ -33,13 +37,28 @@ export function CitizenRegistration({
       return
     }
 
-    if (!mobile.trim()) {
-      setErrorMessage("Please enter your 10-digit mobile number.")
+    if (!mobile.trim() || !/^\d{10}$/.test(mobile.trim())) {
+      setErrorMessage("A valid 10-digit mobile number is required.")
       return
     }
 
-    if (!/^\d{10}$/.test(mobile.trim())) {
-      setErrorMessage("Mobile number must be exactly 10 numeric digits.")
+    if (!password) {
+      setErrorMessage("Password is required.")
+      return
+    }
+
+    if (password.length < 6) {
+      setErrorMessage("Password must be at least 6 characters.")
+      return
+    }
+
+    if (!confirmPassword) {
+      setErrorMessage("Please confirm your password.")
+      return
+    }
+
+    if (password !== confirmPassword) {
+      setErrorMessage("Password and Confirm Password do not match.")
       return
     }
 
@@ -49,6 +68,8 @@ export function CitizenRegistration({
         fullName: fullName.trim(),
         mobile: mobile.trim(),
         email: email.trim() || undefined,
+        password,
+        confirmPassword,
         about: about.trim() || undefined,
       })
 
@@ -148,6 +169,71 @@ export function CitizenRegistration({
         </div>
       </div>
 
+      {/* Password & Confirm Password (2-Column) */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+        <div className="space-y-1.5">
+          <label className="text-xs font-semibold text-foreground">
+            Create Password <span className="text-destructive">*</span>
+          </label>
+          <div className="relative">
+            <Input
+              type={showPassword ? "text" : "password"}
+              value={password}
+              onChange={(e) => {
+                setPassword(e.target.value)
+                setErrorMessage(null)
+              }}
+              placeholder="Min 6 characters"
+              className="pl-9 pr-9 text-xs"
+              disabled={isLoading}
+              autoComplete="new-password"
+            />
+            <div className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground pointer-events-none">
+              <Lock className="size-4" />
+            </div>
+            <button
+              type="button"
+              onClick={() => setShowPassword(!showPassword)}
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground focus:outline-none"
+              aria-label={showPassword ? "Hide password" : "Show password"}
+            >
+              {showPassword ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
+            </button>
+          </div>
+        </div>
+
+        <div className="space-y-1.5">
+          <label className="text-xs font-semibold text-foreground">
+            Confirm Password <span className="text-destructive">*</span>
+          </label>
+          <div className="relative">
+            <Input
+              type={showConfirmPassword ? "text" : "password"}
+              value={confirmPassword}
+              onChange={(e) => {
+                setConfirmPassword(e.target.value)
+                setErrorMessage(null)
+              }}
+              placeholder="Re-enter password"
+              className="pl-9 pr-9 text-xs"
+              disabled={isLoading}
+              autoComplete="new-password"
+            />
+            <div className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground pointer-events-none">
+              <Lock className="size-4" />
+            </div>
+            <button
+              type="button"
+              onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground focus:outline-none"
+              aria-label={showConfirmPassword ? "Hide password" : "Show password"}
+            >
+              {showConfirmPassword ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
+            </button>
+          </div>
+        </div>
+      </div>
+
       {/* About */}
       <div className="space-y-1.5">
         <label className="text-xs font-semibold text-foreground">
@@ -157,7 +243,7 @@ export function CitizenRegistration({
           value={about}
           onChange={(e) => setAbout(e.target.value)}
           placeholder="e.g. Resident of Ormanjhi block, interested in rural water infrastructure."
-          className="text-xs min-h-[60px]"
+          className="text-xs min-h-[55px]"
           disabled={isLoading}
         />
       </div>

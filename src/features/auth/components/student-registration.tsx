@@ -1,7 +1,7 @@
 "use client"
 
 import * as React from "react"
-import { User, Mail, Hash, ArrowRight, AlertCircle, Phone } from "lucide-react"
+import { User, Mail, Hash, ArrowRight, AlertCircle, Phone, Lock, Eye, EyeOff } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -26,10 +26,11 @@ export function StudentRegistration({
   const [email, setEmail] = React.useState("")
   const [university, setUniversity] = React.useState("")
   const [registrationNumber, setRegistrationNumber] = React.useState("")
-  const [uploadedFile, setUploadedFile] = React.useState<{ name: string; size: number } | null>({
-    name: "BIT_Mesra_Student_ID_2026.pdf",
-    size: 245000,
-  })
+  const [password, setPassword] = React.useState("")
+  const [confirmPassword, setConfirmPassword] = React.useState("")
+  const [showPassword, setShowPassword] = React.useState(false)
+  const [showConfirmPassword, setShowConfirmPassword] = React.useState(false)
+  const [uploadedFile, setUploadedFile] = React.useState<{ name: string; size: number } | null>(null)
   const [about, setAbout] = React.useState("")
   const [isLoading, setIsLoading] = React.useState(false)
   const [errorMessage, setErrorMessage] = React.useState<string | null>(null)
@@ -59,7 +60,27 @@ export function StudentRegistration({
     }
 
     if (!uploadedFile) {
-      setErrorMessage("Please upload your student ID card or college enrollment document.")
+      setErrorMessage("Student ID Card is required.")
+      return
+    }
+
+    if (!password) {
+      setErrorMessage("Password is required.")
+      return
+    }
+
+    if (password.length < 6) {
+      setErrorMessage("Password must be at least 6 characters.")
+      return
+    }
+
+    if (!confirmPassword) {
+      setErrorMessage("Please confirm your password.")
+      return
+    }
+
+    if (password !== confirmPassword) {
+      setErrorMessage("Password and Confirm Password do not match.")
       return
     }
 
@@ -73,6 +94,8 @@ export function StudentRegistration({
         registrationNumber: registrationNumber.trim(),
         idCardFileName: uploadedFile.name,
         idCardFileSize: uploadedFile.size,
+        password,
+        confirmPassword,
         about: about.trim() || undefined,
       })
 
@@ -135,7 +158,10 @@ export function StudentRegistration({
         </label>
         <Select
           value={university}
-          onValueChange={(val) => setUniversity(val || "")}
+          onValueChange={(val) => {
+            setUniversity(val || "")
+            setErrorMessage(null)
+          }}
         >
           <SelectTrigger className="w-full text-xs">
             <SelectValue placeholder="Select your university from accredited list" />
@@ -160,7 +186,10 @@ export function StudentRegistration({
             <Input
               type="email"
               value={email}
-              onChange={(e) => setEmail(e.target.value)}
+              onChange={(e) => {
+                setEmail(e.target.value)
+                setErrorMessage(null)
+              }}
               placeholder="e.g. aakash@bitmesra.ac.in"
               className="pl-9 text-xs"
               disabled={isLoading}
@@ -178,7 +207,10 @@ export function StudentRegistration({
           <div className="relative">
             <Input
               value={registrationNumber}
-              onChange={(e) => setRegistrationNumber(e.target.value)}
+              onChange={(e) => {
+                setRegistrationNumber(e.target.value)
+                setErrorMessage(null)
+              }}
               placeholder="e.g. BE/10452/2023"
               className="pl-9 text-xs font-mono"
               disabled={isLoading}
@@ -186,6 +218,71 @@ export function StudentRegistration({
             <div className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground pointer-events-none">
               <Hash className="size-4" />
             </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Password & Confirm Password (2-Column) */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+        <div className="space-y-1.5">
+          <label className="text-xs font-semibold text-foreground">
+            Create Password <span className="text-destructive">*</span>
+          </label>
+          <div className="relative">
+            <Input
+              type={showPassword ? "text" : "password"}
+              value={password}
+              onChange={(e) => {
+                setPassword(e.target.value)
+                setErrorMessage(null)
+              }}
+              placeholder="Min 6 characters"
+              className="pl-9 pr-9 text-xs"
+              disabled={isLoading}
+              autoComplete="new-password"
+            />
+            <div className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground pointer-events-none">
+              <Lock className="size-4" />
+            </div>
+            <button
+              type="button"
+              onClick={() => setShowPassword(!showPassword)}
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground focus:outline-none"
+              aria-label={showPassword ? "Hide password" : "Show password"}
+            >
+              {showPassword ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
+            </button>
+          </div>
+        </div>
+
+        <div className="space-y-1.5">
+          <label className="text-xs font-semibold text-foreground">
+            Confirm Password <span className="text-destructive">*</span>
+          </label>
+          <div className="relative">
+            <Input
+              type={showConfirmPassword ? "text" : "password"}
+              value={confirmPassword}
+              onChange={(e) => {
+                setConfirmPassword(e.target.value)
+                setErrorMessage(null)
+              }}
+              placeholder="Re-enter password"
+              className="pl-9 pr-9 text-xs"
+              disabled={isLoading}
+              autoComplete="new-password"
+            />
+            <div className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground pointer-events-none">
+              <Lock className="size-4" />
+            </div>
+            <button
+              type="button"
+              onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground focus:outline-none"
+              aria-label={showConfirmPassword ? "Hide password" : "Show password"}
+            >
+              {showConfirmPassword ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
+            </button>
           </div>
         </div>
       </div>
@@ -221,8 +318,11 @@ export function StudentRegistration({
           accept=".pdf,.jpg,.jpeg,.png"
           maxSizeMB={5}
           onFilesSelected={(files) => {
-            if (files.length > 0) {
+            if (files && files.length > 0) {
               setUploadedFile({ name: files[0].name, size: files[0].size })
+              setErrorMessage(null)
+            } else {
+              setUploadedFile(null)
             }
           }}
         />

@@ -1,7 +1,7 @@
 "use client"
 
 import * as React from "react"
-import { Landmark, Hash, Mail, User, Phone, ArrowRight, AlertCircle } from "lucide-react"
+import { Landmark, Hash, Mail, User, Phone, ArrowRight, AlertCircle, Lock, Eye, EyeOff } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -24,11 +24,12 @@ export function UniversityRegistration({
   const [officialEmail, setOfficialEmail] = React.useState("")
   const [contactPerson, setContactPerson] = React.useState("")
   const [mobile, setMobile] = React.useState("")
+  const [password, setPassword] = React.useState("")
+  const [confirmPassword, setConfirmPassword] = React.useState("")
+  const [showPassword, setShowPassword] = React.useState(false)
+  const [showConfirmPassword, setShowConfirmPassword] = React.useState(false)
+  const [uploadedFile, setUploadedFile] = React.useState<{ name: string; size: number } | null>(null)
   const [about, setAbout] = React.useState("")
-  const [uploadedFile, setUploadedFile] = React.useState<{ name: string; size: number } | null>({
-    name: "UGC_AISHE_Institutional_Certificate.pdf",
-    size: 512000,
-  })
   const [isLoading, setIsLoading] = React.useState(false)
   const [errorMessage, setErrorMessage] = React.useState<string | null>(null)
 
@@ -56,6 +57,31 @@ export function UniversityRegistration({
       return
     }
 
+    if (!uploadedFile) {
+      setErrorMessage("Institutional Authorization Letter / AISHE Proof is required.")
+      return
+    }
+
+    if (!password) {
+      setErrorMessage("Password is required.")
+      return
+    }
+
+    if (password.length < 6) {
+      setErrorMessage("Password must be at least 6 characters.")
+      return
+    }
+
+    if (!confirmPassword) {
+      setErrorMessage("Please confirm your password.")
+      return
+    }
+
+    if (password !== confirmPassword) {
+      setErrorMessage("Password and Confirm Password do not match.")
+      return
+    }
+
     setIsLoading(true)
     try {
       const response = await authService.registerUniversity({
@@ -64,7 +90,9 @@ export function UniversityRegistration({
         officialEmail: officialEmail.trim(),
         contactPerson: contactPerson.trim(),
         mobile: mobile.trim() || "9835099999",
-        documentFileName: uploadedFile?.name,
+        documentFileName: uploadedFile.name,
+        password,
+        confirmPassword,
         about: about.trim() || undefined,
       })
 
@@ -129,7 +157,10 @@ export function UniversityRegistration({
           <div className="relative">
             <Input
               value={institutionCode}
-              onChange={(e) => setInstitutionCode(e.target.value)}
+              onChange={(e) => {
+                setInstitutionCode(e.target.value)
+                setErrorMessage(null)
+              }}
               placeholder="e.g. U-0270"
               className="pl-9 text-xs font-mono"
               disabled={isLoading}
@@ -148,7 +179,10 @@ export function UniversityRegistration({
             <Input
               type="email"
               value={officialEmail}
-              onChange={(e) => setOfficialEmail(e.target.value)}
+              onChange={(e) => {
+                setOfficialEmail(e.target.value)
+                setErrorMessage(null)
+              }}
               placeholder="e.g. registrar@bitmesra.ac.in"
               className="pl-9 text-xs"
               disabled={isLoading}
@@ -169,7 +203,10 @@ export function UniversityRegistration({
           <div className="relative">
             <Input
               value={contactPerson}
-              onChange={(e) => setContactPerson(e.target.value)}
+              onChange={(e) => {
+                setContactPerson(e.target.value)
+                setErrorMessage(null)
+              }}
               placeholder="e.g. Prof. Dr. R. K. Mishra"
               className="pl-9 text-xs"
               disabled={isLoading}
@@ -200,19 +237,88 @@ export function UniversityRegistration({
         </div>
       </div>
 
+      {/* Password & Confirm Password (2-Column) */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+        <div className="space-y-1.5">
+          <label className="text-xs font-semibold text-foreground">
+            Create Password <span className="text-destructive">*</span>
+          </label>
+          <div className="relative">
+            <Input
+              type={showPassword ? "text" : "password"}
+              value={password}
+              onChange={(e) => {
+                setPassword(e.target.value)
+                setErrorMessage(null)
+              }}
+              placeholder="Min 6 characters"
+              className="pl-9 pr-9 text-xs"
+              disabled={isLoading}
+              autoComplete="new-password"
+            />
+            <div className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground pointer-events-none">
+              <Lock className="size-4" />
+            </div>
+            <button
+              type="button"
+              onClick={() => setShowPassword(!showPassword)}
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground focus:outline-none"
+              aria-label={showPassword ? "Hide password" : "Show password"}
+            >
+              {showPassword ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
+            </button>
+          </div>
+        </div>
+
+        <div className="space-y-1.5">
+          <label className="text-xs font-semibold text-foreground">
+            Confirm Password <span className="text-destructive">*</span>
+          </label>
+          <div className="relative">
+            <Input
+              type={showConfirmPassword ? "text" : "password"}
+              value={confirmPassword}
+              onChange={(e) => {
+                setConfirmPassword(e.target.value)
+                setErrorMessage(null)
+              }}
+              placeholder="Re-enter password"
+              className="pl-9 pr-9 text-xs"
+              disabled={isLoading}
+              autoComplete="new-password"
+            />
+            <div className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground pointer-events-none">
+              <Lock className="size-4" />
+            </div>
+            <button
+              type="button"
+              onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground focus:outline-none"
+              aria-label={showConfirmPassword ? "Hide password" : "Show password"}
+            >
+              {showConfirmPassword ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
+            </button>
+          </div>
+        </div>
+      </div>
+
       {/* Verification Document Upload */}
       <div className="space-y-1.5 pt-1">
         <label className="text-xs font-semibold text-foreground">
-          Institutional Authorization Letter / AISHE Proof
+          Institutional Authorization Letter / AISHE Proof <span className="text-destructive">*</span>
         </label>
         <FileUpload
           label="Upload Institutional Authorization Document"
           description="PDF format with official letterhead (Max: 10MB)"
           accept=".pdf"
           maxSizeMB={10}
+          required
           onFilesSelected={(files) => {
-            if (files.length > 0) {
+            if (files && files.length > 0) {
               setUploadedFile({ name: files[0].name, size: files[0].size })
+              setErrorMessage(null)
+            } else {
+              setUploadedFile(null)
             }
           }}
         />
