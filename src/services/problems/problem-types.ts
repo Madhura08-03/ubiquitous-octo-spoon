@@ -26,10 +26,28 @@ export type ProblemStatus =
   | "resolved"
   | "rejected"
 
+export interface ProblemMedia {
+  type: "image" | "video"
+  url: string
+  alt: string
+  caption?: string
+}
+
+export interface CommunityReport {
+  id: string
+  problemId: string
+  location: string
+  coordinates?: string
+  mediaUrl?: string
+  note?: string
+  createdAt: string
+}
+
 export interface Problem {
   id: string
   title: string
   description: string
+  originalDescription: string
   domain: ProblemDomain
   district: DistrictJharkhand | string
   location: string
@@ -40,7 +58,8 @@ export interface Problem {
   peopleAffected: string
   status: ProblemStatus
   createdAt: string
-  mediaUrl?: string
+  media: ProblemMedia[]
+  reports: CommunityReport[]
   verificationStatus: "verified" | "pending" | "under_review"
   relevanceScore: number
   upvotesCount: number
@@ -62,6 +81,13 @@ export type DurationFilterOption =
   | "6_12_months"
   | "more_1_year"
 
+export type DiscoverySection =
+  | "all"
+  | "trending"
+  | "critical"
+  | "recent"
+  | "nearby"
+
 export interface ProblemFilterQuery {
   search?: string
   domain?: string
@@ -70,6 +96,7 @@ export interface ProblemFilterQuery {
   status?: string
   duration?: DurationFilterOption | string
   sortBy?: SortOption
+  section?: DiscoverySection
   page?: number
   pageSize?: number
 }
@@ -89,4 +116,10 @@ export interface ProblemStats {
   resolvedCount: number
   inProgressCount: number
   totalReportsCount: number
+}
+
+export interface CommunityReportPayload {
+  location: string
+  mediaUrl?: string
+  note?: string
 }

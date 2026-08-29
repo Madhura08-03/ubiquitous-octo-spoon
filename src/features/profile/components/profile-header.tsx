@@ -15,6 +15,7 @@ import {
   MapPin,
   Camera,
   LogOut,
+  Bookmark,
 } from "lucide-react"
 
 import { Button, buttonVariants } from "@/components/ui/button"
@@ -181,9 +182,21 @@ export function ProfileHeader({ profile, onUpdateAvatar, isOwner = true }: Profi
             </div>
           </div>
 
-          {/* Action Buttons (Edit Profile & Logout) */}
+          {/* Action Buttons (Saved, Edit Profile & Logout) */}
           {isOwner && (
-            <div className="flex items-center gap-2">
+            <div className="flex flex-wrap items-center gap-2">
+              <Link
+                href="/profile/saved"
+                className={buttonVariants({
+                  variant: "outline",
+                  size: "sm",
+                  className: "text-xs font-semibold gap-1.5",
+                })}
+              >
+                <Bookmark className="size-3.5 text-primary" />
+                <span>Saved</span>
+              </Link>
+
               <Link
                 href="/profile/edit"
                 className={buttonVariants({
@@ -193,7 +206,7 @@ export function ProfileHeader({ profile, onUpdateAvatar, isOwner = true }: Profi
                 })}
               >
                 <Edit className="size-3.5" />
-                <span>Edit Profile</span>
+                <span>Edit</span>
               </Link>
 
               <Button

@@ -3,6 +3,7 @@ import {
   ProblemDomain,
   SortOption,
   DurationFilterOption,
+  DiscoverySection,
 } from "@/services/problems/problem-types"
 
 export const ALL_PROBLEM_DOMAINS: ProblemDomain[] = [
@@ -40,12 +41,22 @@ export const DURATION_OPTIONS: { value: DurationFilterOption; label: string }[] 
   { value: "more_1_year", label: "More than 1 year" },
 ]
 
+export const DISCOVERY_SECTIONS: { value: DiscoverySection; label: string; description: string }[] = [
+  { value: "all", label: "All Challenges", description: "Complete statewide registry of societal challenges." },
+  { value: "trending", label: "Trending", description: "Problems with the highest community co-reports and civic engagement." },
+  { value: "critical", label: "Critical Urgency", description: "High-severity challenges impacting vital health, water, and infrastructure." },
+  { value: "recent", label: "Recently Reported", description: "Newly submitted community issues logged within the past 60 days." },
+  { value: "nearby", label: "Near You", description: "Active community challenges located across primary district clusters." },
+]
+
 export const MOCK_PROBLEMS: Problem[] = [
   {
     id: "prob_001",
     title: "Groundwater Fluoride & Arsenic Contamination in Rural Borewells",
     description:
       "Multiple public borewells in Ormanjhi block are showing dangerous levels of dissolved fluorides and iron precipitate, causing widespread dental fluorosis and acute stomach ailments across 4 panchayats.",
+    originalDescription:
+      "Residents of Ormanjhi block have been facing contaminated drinking water for over eight months. The water supplied through the existing community handpumps and solar borewells has visible reddish-brown discoloration and a pungent metallic smell. Multiple families in Wards 4 and 5 report recurring gastrointestinal illnesses and early signs of skeletal and dental fluorosis among school-going children. We urgently need a low-cost, decentralized community filtration technology to purify this groundwater at the point of dispensing.",
     domain: "Water Management",
     district: "Ranchi",
     location: "Ormanjhi Block, Ward 4 & 5",
@@ -59,12 +70,32 @@ export const MOCK_PROBLEMS: Problem[] = [
     verificationStatus: "verified",
     relevanceScore: 98,
     upvotesCount: 230,
+    media: [
+      {
+        type: "image",
+        url: "https://images.unsplash.com/photo-1541888946425-d0fbb18f15f6?auto=format&fit=crop&w=1200&q=80",
+        alt: "Contaminated village water tap and cloudy water collection vessel",
+        caption: "Discolored water extracted from Ward 4 community borewell",
+      },
+    ],
+    reports: [
+      {
+        id: "rep_001_1",
+        problemId: "prob_001",
+        location: "Ormanjhi Middle School vicinity",
+        coordinates: "23.4812° N, 85.4721° E",
+        note: "Handpump water leaves yellowish stains on steel utensils within minutes.",
+        createdAt: "2026-01-10T10:00:00Z",
+      },
+    ],
   },
   {
     id: "prob_002",
     title: "Off-Grid Solar Microgrid Inverter Frequency Drift in Heavy Monsoon",
     description:
       "The decentralized 25kW village solar microgrid suffers frequent inverter lockouts and battery thermal runaway during continuous humid overcast spells, leaving primary health sub-centres without vaccine refrigeration.",
+    originalDescription:
+      "Our village microgrid in Dhalbhumgarh installed under the rural electrification scheme experiences severe inverter frequency trips whenever solar irradiance drops below 30% during monsoon storms. The lead-acid storage bank overheats, cutting off power to our primary health sub-centre vaccine deep freezer. We require an intelligent load-shedding and adaptive hybrid inverter control firmware to keep critical cold storage operational during bad weather.",
     domain: "Energy",
     district: "East Singhbhum",
     location: "Ghatshila Block, Dhalbhumgarh",
@@ -78,12 +109,23 @@ export const MOCK_PROBLEMS: Problem[] = [
     verificationStatus: "verified",
     relevanceScore: 91,
     upvotesCount: 145,
+    media: [
+      {
+        type: "image",
+        url: "https://images.unsplash.com/photo-1509391365360-2e959784a276?auto=format&fit=crop&w=1200&q=80",
+        alt: "Rural solar panel array in overcast weather conditions",
+        caption: "Decentralized 25kW solar battery enclosure in Ghatshila",
+      },
+    ],
+    reports: [],
   },
   {
     id: "prob_003",
     title: "Post-Harvest Spoilage in Tribal Mahua & Minor Forest Produce Cold Chain",
     description:
       "Tribal self-help collectives lose over 40% of collected seasonal Mahua flower and Lac harvests due to lack of low-cost, decentralized solar-powered moisture extraction and hermetic storage pods.",
+    originalDescription:
+      "More than 60 women self-help groups in Angara and Silli blocks collect over 80 quintals of Mahua flowers and Lac during the summer months. Because there are no moisture-controlled drying yards or micro-cold storage units, fungal contamination spoils almost half of the harvest before the state cooperative procurement vehicle arrives. We need compact, solar-assisted dehydrators and hermetic pod designs.",
     domain: "Agriculture",
     district: "Ranchi",
     location: "Angara & Silli Blocks",
@@ -97,12 +139,23 @@ export const MOCK_PROBLEMS: Problem[] = [
     verificationStatus: "under_review",
     relevanceScore: 95,
     upvotesCount: 310,
+    media: [
+      {
+        type: "image",
+        url: "https://images.unsplash.com/photo-1595974482597-4b8da8879bc5?auto=format&fit=crop&w=1200&q=80",
+        alt: "Agricultural produce drying on ground in rural village",
+        caption: "Open ground sun-drying of forest produce vulnerable to humidity",
+      },
+    ],
+    reports: [],
   },
   {
     id: "prob_004",
     title: "Structural Scouring of Bamboo Footbridge over Subarnarekha Tributary",
     description:
       "The pedestrian suspension link connecting tribal hamlets to the nearest inter-college and government hospital has suffered severe bank erosion, endangering over 400 school students daily during rains.",
+    originalDescription:
+      "The pedestrian footbridge linking five riverside villages across the Subarnarekha tributary in Chandil has suffered deep foundation erosion on its western embankment. During monsoon flash floods, the water level rises within inches of the walkway deck, and timber support pilings have begun shifting. Over 400 students cross this structure twice daily to reach Chandil High School. An engineered low-cost modular reinforcement solution is urgently required.",
     domain: "Disaster Management",
     district: "Saraikela Kharsawan",
     location: "Chandil Sub-Division",
@@ -116,12 +169,23 @@ export const MOCK_PROBLEMS: Problem[] = [
     verificationStatus: "verified",
     relevanceScore: 99,
     upvotesCount: 420,
+    media: [
+      {
+        type: "image",
+        url: "https://images.unsplash.com/photo-1513836279014-a89f7a76ae86?auto=format&fit=crop&w=1200&q=80",
+        alt: "Eroded river bank and weathered rural wooden footbridge structure",
+        caption: "Western abutment erosion during high river discharge",
+      },
+    ],
+    reports: [],
   },
   {
     id: "prob_005",
     title: "Intermittent Satellite Telemedicine Link Drops in Hill PHCs",
     description:
       "Primary Health Centres located in forested hilly terrain face frequent uplink timeouts during specialist maternal ultrasound consultations, causing critical referral delays to district hospitals.",
+    originalDescription:
+      "The Bishnugarh Primary Health Centre serves a hilly population of over 12,000 tribal residents. When conducting remote tele-consultations for high-risk maternal pregnancies with Ranchi Medical College doctors, the satellite broadband modem drops connection every 15 minutes due to dense sal canopy attenuation. We need store-and-forward edge compression software so ultrasound clips can be transmitted reliably over low 2G bandwidth.",
     domain: "Healthcare",
     district: "Hazaribagh",
     location: "Bishnugarh Block",
@@ -135,12 +199,23 @@ export const MOCK_PROBLEMS: Problem[] = [
     verificationStatus: "pending",
     relevanceScore: 84,
     upvotesCount: 92,
+    media: [
+      {
+        type: "image",
+        url: "https://images.unsplash.com/photo-1576091160550-2173dba999ef?auto=format&fit=crop&w=1200&q=80",
+        alt: "Rural clinic telemedicine diagnostic screen and medical staff",
+        caption: "Bishnugarh PHC diagnostic terminal experiencing uplink latency",
+      },
+    ],
+    reports: [],
   },
   {
     id: "prob_006",
     title: "Open Slag & Overburden Dust Infiltration in Habitation Clusters",
     description:
       "Unstabilized coal mine overburden dumps adjacent to municipal wards produce high PM10 fugitive dust during pre-monsoon winds, spiking asthma and respiratory illnesses among children.",
+    originalDescription:
+      "Open cast mining overburden heaps located less than 500 meters from residential colonies in Bermo release thick clouds of coal dust whenever afternoon wind speeds exceed 25 km/h. Ambient particulate monitors in the local community health center record PM2.5 levels exceeding 280 ug/m3. School children and elders suffer from chronic bronchitis. We need low-cost bio-spraying binders or vegetative coir mats to stabilize the slope dust.",
     domain: "Environment",
     district: "Bokaro",
     location: "Bermo Mining Cluster",
@@ -154,12 +229,23 @@ export const MOCK_PROBLEMS: Problem[] = [
     verificationStatus: "verified",
     relevanceScore: 94,
     upvotesCount: 280,
+    media: [
+      {
+        type: "image",
+        url: "https://images.unsplash.com/photo-1584281729290-3e980a373a46?auto=format&fit=crop&w=1200&q=80",
+        alt: "Industrial dust haze over semi-urban colony near mining area",
+        caption: "Dust haze engulfing Bermo colony during afternoon dry winds",
+      },
+    ],
+    reports: [],
   },
   {
     id: "prob_007",
     title: "Organic Waste Transfer Station Leachate Runoff into Storm Drains",
     description:
       "Municipal secondary garbage compaction yards lack biological enzyme stabilization units, resulting in foul odor plumes and black leachate mixing with drinking water distribution pipelines.",
+    originalDescription:
+      "The secondary waste dumping ground in Jharia Ward 12 sits immediately adjacent to the underground drinking water supply main. During rain showers, unsegregated wet garbage generates toxic black leachate that overflows municipal storm channels and seeps into shallow handpumps. We need localized vermicomposting reactors or decentralized enzyme misting systems to neutralize leachate at source.",
     domain: "Sanitation",
     district: "Dhanbad",
     location: "Jharia Municipal Zone, Ward 12",
@@ -173,12 +259,23 @@ export const MOCK_PROBLEMS: Problem[] = [
     verificationStatus: "under_review",
     relevanceScore: 78,
     upvotesCount: 64,
+    media: [
+      {
+        type: "image",
+        url: "https://images.unsplash.com/photo-1530587191325-3db32d826c18?auto=format&fit=crop&w=1200&q=80",
+        alt: "Urban waste accumulation near residential street drainage",
+        caption: "Uncovered municipal collection point in Jharia Ward 12",
+      },
+    ],
+    reports: [],
   },
   {
     id: "prob_008",
     title: "Low-Bandwidth Digital Classroom Lab Equipment Shortage",
     description:
       "Tribal model residential high schools lack ruggedized, offline-cached STEM simulation tablets and vernacular pedagogy software for physics and mathematics board exam preparation.",
+    originalDescription:
+      "Our Eklavya Model Residential High School in Shikaripara has 240 tribal high-schoolers preparing for State Matriculation exams. Because the area has frequent grid power cuts and no optical fiber internet, conventional online edtech software does not function. We require rugged, low-power micro-server nodes that broadcast offline interactive video experiments and vernacular physics quizzes via local Wi-Fi hotspots.",
     domain: "Education",
     district: "Dumka",
     location: "Shikaripara Block",
@@ -192,12 +289,23 @@ export const MOCK_PROBLEMS: Problem[] = [
     verificationStatus: "verified",
     relevanceScore: 82,
     upvotesCount: 160,
+    media: [
+      {
+        type: "image",
+        url: "https://images.unsplash.com/photo-1509062522246-3755977927d7?auto=format&fit=crop&w=1200&q=80",
+        alt: "Rural classroom with students engaged in learning activities",
+        caption: "Shikaripara students in need of offline-cached digital pedagogy tools",
+      },
+    ],
+    reports: [],
   },
   {
     id: "prob_009",
     title: "Lack of Wheelchair Accessible Ramps at Block Nodal Citizen Desks",
     description:
       "Key block-level public grievance counters and pension disbursal halls have steep step entrances without tactile pavers or universal handicap handrails, restricting access for disabled citizens.",
+    originalDescription:
+      "The main administrative building of Bagodar Block office requires climbing 14 concrete steps to reach the pension and disability welfare window. Elderly villagers with walking sticks and citizens in manual wheelchairs are forced to wait outdoors and rely on strangers to submit their biometric forms. We need modular, low-cost prefabricated accessibility ramps and handrails compliant with universal access standards.",
     domain: "Accessibility",
     district: "Giridih",
     location: "Bagodar Block Head Office",
@@ -211,12 +319,23 @@ export const MOCK_PROBLEMS: Problem[] = [
     verificationStatus: "pending",
     relevanceScore: 71,
     upvotesCount: 48,
+    media: [
+      {
+        type: "image",
+        url: "https://images.unsplash.com/photo-1584467735871-8e85353a8413?auto=format&fit=crop&w=1200&q=80",
+        alt: "Public building entrance with steep concrete steps and no ramp",
+        caption: "Entrance steps at Bagodar Block office lacking disability access",
+      },
+    ],
+    reports: [],
   },
   {
     id: "prob_010",
     title: "Severe Groundwater Depletion & Rainwater Runoff Loss in Rocky Strata",
     description:
       "Hard crystalline granite bedrock prevents natural aquifer recharge, causing acute summer borewell drying. Low-cost continuous contour trenches and boulder check dams are urgently required.",
+    originalDescription:
+      "In Daltonganj rural outskirts, intense rainfall during July-August quickly drains off sloped granite terrain into seasonal nullahs without recharging deep subterranean water tables. By March, over 80% of irrigation and drinking borewells go completely dry, forcing villagers to purchase water tanker supplies at exorbitant rates. We need GIS-mapped contour trenching designs and dry-stone check dam models built with local stone.",
     domain: "Water Management",
     district: "Palamu",
     location: "Daltonganj Rural Outskirts",
@@ -230,12 +349,23 @@ export const MOCK_PROBLEMS: Problem[] = [
     verificationStatus: "verified",
     relevanceScore: 92,
     upvotesCount: 210,
+    media: [
+      {
+        type: "image",
+        url: "https://images.unsplash.com/photo-1500382017468-9049fed747ef?auto=format&fit=crop&w=1200&q=80",
+        alt: "Dry cracked earth and sloped rocky agricultural fields in summer",
+        caption: "Sloped terrain in Palamu prone to rapid surface runoff and soil loss",
+      },
+    ],
+    reports: [],
   },
   {
     id: "prob_011",
     title: "Automated Rural Road Pothole & Edge-Drop Hazard Detection",
     description:
       "Heavy mineral freight transport causes rapid surface rutting on single-lane rural feeder roads, leading to frequent two-wheeler overturns during fog and night transit.",
+    originalDescription:
+      "The Patratu-Ramgarh connecting rural highway carries continuous heavy dumper traffic from nearby quarries. Severe edge drop-offs and cratered potholes develop within weeks of asphalt patching. Local two-wheeler riders and auto-rickshaw ambulances frequently suffer accidents at unlit blind curves. We need a smartphone or dashcam-based computer vision tool to automatically log road distress indices for priority public works repair.",
     domain: "Urban Development",
     district: "Ramgarh",
     location: "Patratu-Ramgarh Arterial Corridor",
@@ -249,12 +379,23 @@ export const MOCK_PROBLEMS: Problem[] = [
     verificationStatus: "verified",
     relevanceScore: 76,
     upvotesCount: 115,
+    media: [
+      {
+        type: "image",
+        url: "https://images.unsplash.com/photo-1515162816999-a0c47dc192f7?auto=format&fit=crop&w=1200&q=80",
+        alt: "Damaged rural asphalt road with large potholes and crumbling shoulder",
+        caption: "Rutted pavement section on Patratu-Ramgarh corridor",
+      },
+    ],
+    reports: [],
   },
   {
     id: "prob_012",
     title: "Tribal Finger Millet (Ragi) Processing & De-husking Bottleneck",
     description:
       "Women farmer producer groups spend over 5 hours manually pounding and grading small-seeded millets due to the lack of compact, low-vibration electric de-hulling machines suited to single-phase rural power.",
+    originalDescription:
+      "Over 120 Ho tribal farm families in Chaibasa cultivate climate-resilient finger millet (Mandia/Ragi). However, de-husking the hard outer glume is currently done using heavy wooden mortar-pestles (Dhenki), which causes acute chronic back pain and limits value-added flour sales. We need an energy-efficient, 1-horsepower millet dehuller with adjustable abrasive rollers that can run on domestic single-phase power connections.",
     domain: "Rural Livelihoods",
     district: "West Singhbhum",
     location: "Chaibasa Tribal Belt",
@@ -268,12 +409,23 @@ export const MOCK_PROBLEMS: Problem[] = [
     verificationStatus: "verified",
     relevanceScore: 86,
     upvotesCount: 135,
+    media: [
+      {
+        type: "image",
+        url: "https://images.unsplash.com/photo-1574943320219-553eb213f72d?auto=format&fit=crop&w=1200&q=80",
+        alt: "Harvested whole grains and agricultural sorting baskets in village courtyard",
+        caption: "Harvested finger millet awaiting laborious manual pounding in Chaibasa",
+      },
+    ],
+    reports: [],
   },
   {
     id: "prob_013",
     title: "Early Warning Flash-Flood River Sensor Alert Latency",
     description:
       "Ultrasonic water level monitoring nodes along the seasonal river basin suffer radio packet loss during thunderstorms, delaying automated sirens to low-lying riverside bastis.",
+    originalDescription:
+      "During cloudburst events in the Santhal Pargana catchment, the Ajay river tributary in Madhupur rises by more than 3 meters in under 45 minutes. The solar ultrasonic river level telemetry station installed upstream suffers frequent RF packet dropouts in heavy lightning storms, failing to trigger the siren relay in time for riverside families to evacuate livestock. We need an ultra-reliable, mesh LoRaWAN transceiver backup with battery autonomous fail-safe triggers.",
     domain: "Disaster Management",
     district: "Deoghar",
     location: "Madhupur Sub-Division",
@@ -287,12 +439,23 @@ export const MOCK_PROBLEMS: Problem[] = [
     verificationStatus: "pending",
     relevanceScore: 88,
     upvotesCount: 170,
+    media: [
+      {
+        type: "image",
+        url: "https://images.unsplash.com/photo-1544620347-c4fd4a3d5957?auto=format&fit=crop&w=1200&q=80",
+        alt: "Swollen muddy river during heavy monsoon rainstorm",
+        caption: "River level rising rapidly near low-lying settlements in Madhupur",
+      },
+    ],
+    reports: [],
   },
   {
     id: "prob_014",
     title: "Panchayat Public Grievance Routing & Acknowledgement Bottleneck",
     description:
       "Citizens submitting handwritten grievance slips at village seva kendras experience tracking delays because applications are manually physically transported to block offices only once a week.",
+    originalDescription:
+      "Citizens in Kanke block submitting complaints regarding drinking water pipeline leaks, streetlights, and ration distribution at village Pragya Kendras receive handwritten paper slips without digital reference numbers. Applications lie bundled in physical registers for 7 to 10 days before block nodal officers review them. We need a lightweight smartphone OCR app for village operators to instantly digitize, tag GPS, and generate an SMS receipt number for the citizen.",
     domain: "Public Administration",
     district: "Ranchi",
     location: "Kanke Block Gram Kacheri",
@@ -306,5 +469,14 @@ export const MOCK_PROBLEMS: Problem[] = [
     verificationStatus: "verified",
     relevanceScore: 70,
     upvotesCount: 52,
+    media: [
+      {
+        type: "image",
+        url: "https://images.unsplash.com/photo-1450133064473-71024230f91b?auto=format&fit=crop&w=1200&q=80",
+        alt: "Village citizen service counter and administrative paperwork files",
+        caption: "Physical paper grievance intake registers at Kanke Gram Kacheri",
+      },
+    ],
+    reports: [],
   },
 ]

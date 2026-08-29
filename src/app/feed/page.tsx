@@ -8,15 +8,19 @@ import { ErrorState } from "@/components/ui/error-state"
 import { Button } from "@/components/ui/button"
 import { FeedHeader } from "@/features/problems/components/feed-header"
 import { FeedStatsSummary } from "@/features/problems/components/feed-stats-summary"
+import { FeedDiscoveryTabs } from "@/features/problems/components/feed-discovery-tabs"
 import { ProblemFilters } from "@/features/problems/components/problem-filters"
 import { ProblemSort } from "@/features/problems/components/problem-sort"
 import { ActiveFilterChips } from "@/features/problems/components/active-filter-chips"
 import { ProblemCard } from "@/features/problems/components/problem-card"
+import { ReportProblemModal } from "@/features/problems/components/report-problem-modal"
+import { LoginPromptDialog } from "@/features/problems/components/login-prompt-dialog"
 import {
   Problem,
   ProblemFilterQuery,
   ProblemStats,
   SortOption,
+  DiscoverySection,
 } from "@/services/problems/problem-types"
 import { problemService } from "@/services/problems/problem-service"
 import { MOCK_PROBLEMS } from "@/data/problems/problem-data"
@@ -30,6 +34,7 @@ export default function ProblemFeedPage() {
     status: "all",
     duration: "all",
     sortBy: "relevance",
+    section: "all",
     page: 1,
     pageSize: 6,
   })
@@ -41,16 +46,22 @@ export default function ProblemFeedPage() {
   const [isLoading, setIsLoading] = React.useState(true)
   const [hasError, setHasError] = React.useState(false)
 
+  // Modals state
+  const [reportTargetProblem, setReportTargetProblem] = React.useState<Problem | null>(null)
+  const [reportModalOpen, setReportModalOpen] = React.useState(false)
+  const [loginPromptOpen, setLoginPromptOpen] = React.useState(false)
+  const [authActionType, setAuthActionType] = React.useState<"save" | "report">("save")
+
   React.useEffect(() => {
     let isMounted = true
 
     problemService
       .getProblems(filters)
-      .then((result) => {
+      .then((res) => {
         if (isMounted) {
-          setProblems(result.items)
-          setTotalResults(result.total)
-          setTotalPages(result.totalPages)
+          setProblems(res.items)
+          setTotalResults(res.total)
+          setTotalPages(res.totalPages)
           setIsLoading(false)
         }
       })
@@ -67,10 +78,31 @@ export default function ProblemFeedPage() {
       }
     })
 
+    const unsubscribe = problemService.subscribe(() => {
+      problemService.getProblems(filters).then((res) => {
+        if (isMounted) {
+          setProblems(res.items)
+          setTotalResults(res.total)
+          setTotalPages(res.totalPages)
+        }
+      })
+      problemService.getProblemStats().then((statsData) => {
+        if (isMounted) {
+          setStats(statsData)
+        }
+      })
+    })
+
     return () => {
       isMounted = false
+      unsubscribe()
     }
   }, [filters])
+
+  const handleSectionChange = (section: DiscoverySection) => {
+    setIsLoading(true)
+    setFilters((prev) => ({ ...prev, section, page: 1 }))
+  }
 
   const handleFilterChange = (newFilters: ProblemFilterQuery) => {
     setIsLoading(true)
@@ -101,6 +133,7 @@ export default function ProblemFeedPage() {
       status: "all",
       duration: "all",
       sortBy: "relevance",
+      section: "all",
       page: 1,
       pageSize: 6,
     })
@@ -109,7 +142,23 @@ export default function ProblemFeedPage() {
   const handlePageChange = (newPage: number) => {
     setIsLoading(true)
     setFilters((prev) => ({ ...prev, page: newPage }))
-    window.scrollTo({ top: 200, behavior: "smooth" })
+    window.scrollTo({ top: 300, behavior: "smooth" })
+  }
+
+  const handleOpenReportModal = (problem: Problem) => {
+    setReportTargetProblem(problem)
+    setReportModalOpen(true)
+  }
+
+  const handleRequireAuth = (action: "save" | "report") => {
+    setAuthActionType(action)
+    setLoginPromptOpen(true)
+  }
+
+  const handleReportSuccess = (updatedProblem: Problem) => {
+    setProblems((prev) =>
+      prev.map((p) => (p.id === updatedProblem.id ? updatedProblem : p))
+    )
   }
 
   const handleRetry = () => {
@@ -129,8 +178,15 @@ export default function ProblemFeedPage() {
         {/* 2. Overview Stats Summary */}
         <FeedStatsSummary stats={stats} />
 
-        {/* 3. Search & Filter Toolbar */}
-        <div className="rounded-2xl border border-border bg-card p-4 sm:p-5 shadow-xs space-y-3">
+        {/* 3. Discovery Sections & Filter Toolbar */}
+        <div className="rounded-2xl border border-border bg-card p-4 sm:p-5 shadow-xs space-y-4">
+          {/* Discovery Tabs (All, Trending, Critical, Recent, Near You) */}
+          <FeedDiscoveryTabs
+            activeSection={filters.section || "all"}
+            onChange={handleSectionChange}
+          />
+
+          {/* Search, Filter Toolbar, and Sort Dropdown */}
           <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 border-b border-border/80 pb-3">
             <ProblemFilters
               filters={filters}
@@ -169,21 +225,20 @@ export default function ProblemFeedPage() {
             {[1, 2, 3, 4].map((n) => (
               <div
                 key={n}
-                className="rounded-2xl border border-border bg-card p-6 space-y-4 animate-pulse"
+                className="rounded-2xl border border-border bg-card overflow-hidden shadow-xs animate-pulse"
               >
-                <div className="flex justify-between items-center">
-                  <div className="h-5 bg-muted rounded-md w-28" />
-                  <div className="h-5 bg-muted rounded-md w-20" />
-                </div>
-                <div className="h-6 bg-muted rounded-md w-3/4" />
-                <div className="space-y-2">
-                  <div className="h-4 bg-muted rounded-md w-full" />
-                  <div className="h-4 bg-muted rounded-md w-5/6" />
-                </div>
-                <div className="grid grid-cols-3 gap-2 pt-2">
-                  <div className="h-10 bg-muted rounded-lg" />
-                  <div className="h-10 bg-muted rounded-lg" />
-                  <div className="h-10 bg-muted rounded-lg" />
+                <div className="aspect-video bg-muted w-full" />
+                <div className="p-5 space-y-4">
+                  <div className="h-6 bg-muted rounded-md w-3/4" />
+                  <div className="space-y-2">
+                    <div className="h-4 bg-muted rounded-md w-full" />
+                    <div className="h-4 bg-muted rounded-md w-5/6" />
+                  </div>
+                  <div className="grid grid-cols-3 gap-2 pt-2">
+                    <div className="h-10 bg-muted rounded-lg" />
+                    <div className="h-10 bg-muted rounded-lg" />
+                    <div className="h-10 bg-muted rounded-lg" />
+                  </div>
                 </div>
               </div>
             ))}
@@ -199,10 +254,15 @@ export default function ProblemFeedPage() {
           </div>
         ) : (
           <div className="space-y-6">
-            {/* Grid of Problem Cards */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+            {/* Social Discovery Grid of Problem Cards */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               {problems.map((problem) => (
-                <ProblemCard key={problem.id} problem={problem} />
+                <ProblemCard
+                  key={problem.id}
+                  problem={problem}
+                  onOpenReportModal={handleOpenReportModal}
+                  onRequireAuth={handleRequireAuth}
+                />
               ))}
             </div>
 
@@ -262,6 +322,21 @@ export default function ProblemFeedPage() {
           </div>
         )}
       </main>
+
+      {/* Community Co-Report Modal */}
+      <ReportProblemModal
+        problem={reportTargetProblem}
+        open={reportModalOpen}
+        onOpenChange={setReportModalOpen}
+        onReportSuccess={handleReportSuccess}
+      />
+
+      {/* Unauthenticated Login Prompt Dialog */}
+      <LoginPromptDialog
+        open={loginPromptOpen}
+        onOpenChange={setLoginPromptOpen}
+        actionType={authActionType}
+      />
 
       <PublicFooter />
     </div>
