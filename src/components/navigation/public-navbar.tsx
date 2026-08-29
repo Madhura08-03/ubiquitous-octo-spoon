@@ -30,7 +30,7 @@ export interface PublicNavbarProps {
 
 const DEFAULT_NAV_LINKS: NavLink[] = [
   { label: "Home", href: "/" },
-  { label: "Challenges", href: "#challenges" },
+  { label: "Challenges", href: "/feed" },
   { label: "How It Works", href: "#how-it-works" },
   { label: "Impact", href: "#impact" },
   { label: "About", href: "#about" },

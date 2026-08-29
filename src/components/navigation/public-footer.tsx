@@ -44,7 +44,7 @@ export function PublicFooter() {
             </p>
             <ul className="space-y-2 text-muted-foreground">
               <li>
-                <Link href="#challenges" className="hover:text-foreground transition-colors">
+                <Link href="/feed" className="hover:text-foreground transition-colors">
                   Challenges Feed
                 </Link>
               </li>
