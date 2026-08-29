@@ -11,6 +11,9 @@ import {
   SimilarProblemMatch,
   ProblemDomain,
   ProblemPriority,
+  ProblemLifecycleStage,
+  ProblemLifecycleStep,
+  ProblemTrackingDetail,
 } from "./problem-types"
 import { MOCK_PROBLEMS } from "@/data/problems/problem-data"
 
@@ -868,6 +871,216 @@ export class MockProblemService {
 
     this.notify()
     return newProblem
+  }
+
+  // ==================== MY PROBLEMS & LIFECYCLE TRACKING (TASK 10) ====================
+
+  /**
+   * Retrieves all problems submitted by the currently authenticated user.
+   */
+  async getUserSubmittedProblems(): Promise<Problem[]> {
+    await this.simulateDelay(120)
+    const newlyCreated = this.getStoredNewProblems()
+    
+    // Newly created problems with overrides
+    const newProblemsWithOverrides = newlyCreated.map((p) => this.mergeWithOverrides(p))
+    
+    // Also include demo citizen-reported problems (prob_001, prob_003, prob_005) for rich demo experience
+    const demoSubmittedIds = ["prob_001", "prob_003", "prob_005"]
+    const all = await this.getAllProblems()
+    const demoProblems = all.filter((p) => demoSubmittedIds.includes(p.id))
+    
+    const combined = [...newProblemsWithOverrides]
+    for (const p of demoProblems) {
+      if (!combined.some((item) => item.id === p.id)) {
+        combined.push(p)
+      }
+    }
+    
+    return combined
+  }
+
+  /**
+   * Retrieves 9-stage visual lifecycle tracking details for a specific problem.
+   */
+  async getProblemTrackingDetail(problemId: string): Promise<ProblemTrackingDetail> {
+    await this.simulateDelay(180)
+    const problem = await this.getProblemById(problemId)
+    if (!problem) {
+      throw new Error(`Problem with ID ${problemId} not found.`)
+    }
+
+    // Map problem status to one of the 9 stages
+    let currentStage: ProblemLifecycleStage = "submitted"
+    let stageIndex = 0
+
+    const statusLower = (problem.status || "").toLowerCase()
+    if (statusLower === "submitted") {
+      currentStage = "submitted"
+      stageIndex = 0
+    } else if (statusLower === "under_review") {
+      currentStage = "under_review"
+      stageIndex = 1
+    } else if (statusLower === "verified") {
+      currentStage = "verified"
+      stageIndex = 2
+    } else if (statusLower === "university_assigned") {
+      currentStage = "university_assigned"
+      stageIndex = 3
+    } else if (statusLower === "in_development" || statusLower === "in_progress") {
+      currentStage = "in_development"
+      stageIndex = 4
+    } else if (statusLower === "prototype") {
+      currentStage = "prototype"
+      stageIndex = 5
+    } else if (statusLower === "pilot") {
+      currentStage = "pilot"
+      stageIndex = 6
+    } else if (statusLower === "deployed") {
+      currentStage = "deployed"
+      stageIndex = 7
+    } else if (statusLower === "impact_verified" || statusLower === "resolved") {
+      currentStage = "impact_verified"
+      stageIndex = 8
+    } else {
+      currentStage = "verified"
+      stageIndex = 2
+    }
+
+    // Progress percentage mapping
+    const progressMap = [10, 22, 35, 48, 60, 72, 84, 92, 100]
+    const progressPercentage = progressMap[stageIndex] || 35
+
+    const stageDefinitions: { stage: ProblemLifecycleStage; label: string; description: string }[] = [
+      {
+        stage: "submitted",
+        label: "Submitted",
+        description: "Problem statement and field evidence registered by citizen in Jharkhand state registry.",
+      },
+      {
+        stage: "under_review",
+        label: "Under Review",
+        description: "District Nodal Team screening statement, GPS telemetry, and initial eligibility criteria.",
+      },
+      {
+        stage: "verified",
+        label: "Verified",
+        description: "Authenticity verified with community corroboration and categorized for university matching.",
+      },
+      {
+        stage: "university_assigned",
+        label: "University Assigned",
+        description: "Assigned to Higher Education University R&D Cell & Student Innovation Team.",
+      },
+      {
+        stage: "in_development",
+        label: "In Development",
+        description: "Multidisciplinary student & faculty engineering team formulating technical solution architecture.",
+      },
+      {
+        stage: "prototype",
+        label: "Prototype",
+        description: "Working laboratory MVP prototype built, calibrated, and bench-tested.",
+      },
+      {
+        stage: "pilot",
+        label: "Pilot",
+        description: "On-ground field deployment and controlled community trial in target locality.",
+      },
+      {
+        stage: "deployed",
+        label: "Deployed",
+        description: "Full-scale solution deployed and operational under district administration oversight.",
+      },
+      {
+        stage: "impact_verified",
+        label: "Impact Verified",
+        description: "Measured community outcome verified against key societal impact benchmarks.",
+      },
+    ]
+
+    const steps: ProblemLifecycleStep[] = stageDefinitions.map((def, idx) => {
+      return {
+        stage: def.stage,
+        label: def.label,
+        description: def.description,
+        completed: idx < stageIndex,
+        current: idx === stageIndex,
+        date: idx <= stageIndex ? (idx === 0 ? "12 Aug 2026" : idx === 1 ? "14 Aug 2026" : idx === 2 ? "18 Aug 2026" : undefined) : undefined,
+      }
+    })
+
+    // Contextual university assignment
+    let assignedUniversity = undefined
+    if (stageIndex >= 2) {
+      assignedUniversity = {
+        name: "Birla Institute of Technology (BIT), Mesra",
+        department: "Department of Civil & Environmental Engineering",
+        leadResearcher: "Dr. R. K. Mishra (Faculty Lead) & Aakash Soren (Student Lead)",
+        assignedDate: "16 Aug 2026",
+      }
+    }
+
+    // Contextual project status
+    let projectStatus = undefined
+    if (stageIndex >= 3) {
+      projectStatus = {
+        title: "Decentralized Filtration & Water Sensing Unit",
+        phase: stageIndex >= 5 ? "Prototype Phase II" : "Solution Architecture & Modeling",
+        progress: progressPercentage,
+      }
+    }
+
+    // Chronological recent updates
+    const recentUpdates = [
+      {
+        date: "18 Aug 2026",
+        title: "Problem verified by Government Nodal Team",
+        description: "Field verification complete with 140+ corroborating citizen reports from Ranchi district.",
+        stage: "verified" as ProblemLifecycleStage,
+      },
+      {
+        date: "16 Aug 2026",
+        title: "University assignment initiated",
+        description: "Matching with BIT Mesra Environmental & IoT R&D Lab under Jharkhand Higher Education Innovation Scheme.",
+        stage: "university_assigned" as ProblemLifecycleStage,
+      },
+      {
+        date: "14 Aug 2026",
+        title: "District Nodal preliminary review completed",
+        description: "Initial GPS telemetry and photographic evidence authenticated by Ormanjhi block coordinator.",
+        stage: "under_review" as ProblemLifecycleStage,
+      },
+      {
+        date: "12 Aug 2026",
+        title: "Problem registered in State Innovation Registry",
+        description: "Initial citizen statement and observational ground evidence logged.",
+        stage: "submitted" as ProblemLifecycleStage,
+      },
+    ]
+
+    const stageLabelMap: Record<ProblemLifecycleStage, string> = {
+      submitted: "Submitted",
+      under_review: "Under Review",
+      verified: "Verified",
+      university_assigned: "University Assigned",
+      in_development: "In Development",
+      prototype: "Prototype",
+      pilot: "Pilot",
+      deployed: "Deployed",
+      impact_verified: "Impact Verified",
+    }
+
+    return {
+      problem,
+      currentStage,
+      stageLabel: stageLabelMap[currentStage] || "Verified",
+      progressPercentage,
+      steps,
+      assignedUniversity,
+      projectStatus,
+      recentUpdates,
+    }
   }
 
   private simulateDelay(ms: number): Promise<void> {

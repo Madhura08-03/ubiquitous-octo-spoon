@@ -3,7 +3,7 @@
 import * as React from "react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
-import { Shield, Search, Menu, User, Sparkles, LogOut } from "lucide-react"
+import { Shield, Search, Menu, User, Sparkles, LogOut, Activity } from "lucide-react"
 
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
@@ -243,6 +243,14 @@ export function PublicNavbar({
                       >
                         <User className="size-4 text-primary" />
                         <span>My Profile ({authUser.name})</span>
+                      </Link>
+                      <Link
+                        href="/my-problems"
+                        onClick={() => setIsOpen(false)}
+                        className="text-sm font-medium text-muted-foreground hover:text-foreground py-1.5 transition-colors flex items-center gap-2"
+                      >
+                        <Activity className="size-4 text-primary" />
+                        <span>My Problems</span>
                       </Link>
                       <Link
                         href="/onboarding"

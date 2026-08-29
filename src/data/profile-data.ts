@@ -6,6 +6,11 @@ import {
   UserProfile,
   DistrictJharkhand,
 } from "@/services/profile/profile-types"
+import {
+  StudentProject,
+  StudentContribution,
+  StudentAchievement,
+} from "@/services/problems/problem-types"
 
 export const JHARKHAND_DISTRICTS: DistrictJharkhand[] = [
   "Ranchi",
@@ -151,3 +156,136 @@ export const MOCK_PROFILES_BY_ROLE: Record<string, UserProfile> = {
   university: DEFAULT_UNIVERSITY_PROFILE,
   industry: DEFAULT_INDUSTRY_PROFILE,
 }
+
+export const MOCK_STUDENT_PROJECTS: StudentProject[] = [
+  {
+    id: "proj_001",
+    title: "Smart Groundwater Fluoride & Arsenic Filtration System",
+    problemId: "prob_001",
+    problemTitle: "Groundwater Fluoride & Arsenic Contamination in Rural Borewells",
+    domain: "Water Management",
+    role: "IoT & Firmware Developer",
+    progress: 68,
+    stages: [
+      { name: "Research", status: "completed" },
+      { name: "Design", status: "completed" },
+      { name: "Prototype", status: "current" },
+      { name: "Testing", status: "pending" },
+      { name: "Pilot", status: "pending" },
+    ],
+    university: "Birla Institute of Technology, Mesra",
+    department: "Dept. of Computer Science & Engineering",
+    teamSize: 4,
+    lastUpdated: "2026-08-20T10:30:00Z",
+  },
+  {
+    id: "proj_002",
+    title: "Monsoon-Resilient Microgrid Inverter Firmware & Telemetry",
+    problemId: "prob_002",
+    problemTitle: "Off-Grid Solar Microgrid Inverter Frequency Drift in Heavy Monsoon",
+    domain: "Energy",
+    role: "Embedded Systems Contributor",
+    progress: 45,
+    stages: [
+      { name: "Research", status: "completed" },
+      { name: "Design", status: "current" },
+      { name: "Prototype", status: "pending" },
+      { name: "Testing", status: "pending" },
+      { name: "Pilot", status: "pending" },
+    ],
+    university: "Birla Institute of Technology, Mesra",
+    department: "Dept. of Electrical & Electronics Engineering",
+    teamSize: 3,
+    lastUpdated: "2026-08-16T14:15:00Z",
+  },
+  {
+    id: "proj_003",
+    title: "Decentralized Biomass Solar Cold-Storage Controller",
+    problemId: "prob_005",
+    problemTitle: "Lack of Micro Cold-Storage for Mahua & Lac Forest Produce",
+    domain: "Agriculture",
+    role: "Sensors & Power Integration Lead",
+    progress: 25,
+    stages: [
+      { name: "Research", status: "completed" },
+      { name: "Design", status: "pending" },
+      { name: "Prototype", status: "pending" },
+      { name: "Testing", status: "pending" },
+      { name: "Pilot", status: "pending" },
+    ],
+    university: "Birla Institute of Technology, Mesra",
+    department: "Centre of Excellence in Renewable Energy",
+    teamSize: 5,
+    lastUpdated: "2026-08-08T09:00:00Z",
+  },
+]
+
+export const MOCK_STUDENT_CONTRIBUTIONS: StudentContribution[] = [
+  {
+    id: "contrib_001",
+    title: "Joined Water Monitoring Project",
+    projectTitle: "Smart Groundwater Fluoride & Arsenic Filtration System",
+    type: "join",
+    date: "14 Aug 2026",
+    description: "Onboarded as IoT Firmware Engineer under Faculty Mentor Dr. R. K. Mishra.",
+  },
+  {
+    id: "contrib_002",
+    title: "Completed Sensor Integration Milestone",
+    projectTitle: "Smart Groundwater Fluoride & Arsenic Filtration System",
+    type: "milestone",
+    date: "18 Aug 2026",
+    description: "Integrated analog electrochemical fluoride sensor node with ESP32 LoRa module.",
+  },
+  {
+    id: "contrib_003",
+    title: "Submitted Technical Research Document",
+    projectTitle: "Monsoon-Resilient Microgrid Inverter Firmware",
+    type: "research",
+    date: "22 Aug 2026",
+    description: "Published comparative benchmarking report on adaptive frequency tracking algorithms under low solar irradiance.",
+  },
+  {
+    id: "contrib_004",
+    title: "Contributed Prototype Hardware Schematic",
+    projectTitle: "Smart Groundwater Fluoride & Arsenic Filtration System",
+    type: "prototype",
+    date: "26 Aug 2026",
+    description: "Committed KiCad multi-channel ADC daughterboard layout to portal R&D repository.",
+  },
+]
+
+export const MOCK_STUDENT_ACHIEVEMENTS: StudentAchievement[] = [
+  {
+    id: "ach_001",
+    title: "First Project Onboarded",
+    description: "Joined a multidisciplinary societal challenge R&D team at BIT Mesra.",
+    icon: "Rocket",
+    badgeVariant: "default",
+    dateEarned: "August 2026",
+  },
+  {
+    id: "ach_002",
+    title: "Community Contributor",
+    description: "Submitted 10+ verified technical commits and milestone reports.",
+    icon: "Award",
+    badgeVariant: "secondary",
+    dateEarned: "August 2026",
+  },
+  {
+    id: "ach_003",
+    title: "Innovation Champion",
+    description: "Recognized by Dept. of Higher & Technical Education for grassroots solution prototype.",
+    icon: "Trophy",
+    badgeVariant: "default",
+    dateEarned: "August 2026",
+  },
+  {
+    id: "ach_004",
+    title: "Prototype Builder",
+    description: "Delivered functional IoT sensor node test bench for Ormanjhi water pilot.",
+    icon: "Hammer",
+    badgeVariant: "outline",
+    dateEarned: "August 2026",
+  },
+]

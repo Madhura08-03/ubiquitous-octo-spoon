@@ -17,6 +17,7 @@ import {
   LogOut,
   Bookmark,
   FileCheck2,
+  Activity,
 } from "lucide-react"
 
 import { Button, buttonVariants } from "@/components/ui/button"
@@ -183,9 +184,21 @@ export function ProfileHeader({ profile, onUpdateAvatar, isOwner = true }: Profi
             </div>
           </div>
 
-          {/* Action Buttons (Reports, Saved, Edit Profile & Logout) */}
+          {/* Action Buttons (My Problems, Reports, Saved, Edit Profile & Logout) */}
           {isOwner && (
             <div className="flex flex-wrap items-center gap-2">
+              <Link
+                href="/my-problems"
+                className={buttonVariants({
+                  variant: "outline",
+                  size: "sm",
+                  className: "text-xs font-semibold gap-1.5",
+                })}
+              >
+                <Activity className="size-3.5 text-primary" />
+                <span>My Problems</span>
+              </Link>
+
               <Link
                 href="/profile/reports"
                 className={buttonVariants({

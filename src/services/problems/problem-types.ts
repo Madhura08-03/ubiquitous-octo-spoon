@@ -18,10 +18,19 @@ export type ProblemDomain =
 
 export type ProblemPriority = "critical" | "high" | "medium" | "low"
 
-export type ProblemStatus =
+export type ProblemLifecycleStage =
   | "submitted"
   | "under_review"
   | "verified"
+  | "university_assigned"
+  | "in_development"
+  | "prototype"
+  | "pilot"
+  | "deployed"
+  | "impact_verified"
+
+export type ProblemStatus =
+  | ProblemLifecycleStage
   | "in_progress"
   | "resolved"
   | "rejected"
@@ -205,4 +214,74 @@ export interface ProblemAnalysisResult {
     recommendedProblemTitle?: string
   }
   analyzedAt: string
+}
+
+export interface ProblemLifecycleStep {
+  stage: ProblemLifecycleStage
+  label: string
+  description: string
+  completed: boolean
+  current: boolean
+  date?: string
+}
+
+export interface ProblemTrackingDetail {
+  problem: Problem
+  currentStage: ProblemLifecycleStage
+  stageLabel: string
+  progressPercentage: number
+  steps: ProblemLifecycleStep[]
+  assignedUniversity?: {
+    name: string
+    department: string
+    leadResearcher: string
+    assignedDate: string
+  }
+  projectStatus?: {
+    title: string
+    phase: string
+    progress: number
+  }
+  recentUpdates: {
+    date: string
+    title: string
+    description: string
+    stage: ProblemLifecycleStage
+  }[]
+}
+
+export interface StudentProject {
+  id: string
+  title: string
+  problemId: string
+  problemTitle: string
+  domain: ProblemDomain
+  role: string
+  progress: number
+  stages: {
+    name: "Research" | "Design" | "Prototype" | "Testing" | "Pilot"
+    status: "completed" | "current" | "pending"
+  }[]
+  university: string
+  department: string
+  teamSize: number
+  lastUpdated: string
+}
+
+export interface StudentContribution {
+  id: string
+  title: string
+  projectTitle: string
+  type: "milestone" | "research" | "documentation" | "prototype" | "join"
+  date: string
+  description: string
+}
+
+export interface StudentAchievement {
+  id: string
+  title: string
+  description: string
+  icon: string
+  badgeVariant: "default" | "secondary" | "outline"
+  dateEarned: string
 }

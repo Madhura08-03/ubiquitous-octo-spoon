@@ -4,7 +4,6 @@ import * as React from "react"
 import {
   User,
   Shield,
-  GraduationCap,
   Landmark,
   Building2,
   Lock,
@@ -14,7 +13,6 @@ import {
   Briefcase,
   Clock,
   FileCheck,
-  Tag,
   Eye,
   EyeOff,
   MapPin,
@@ -31,6 +29,8 @@ import {
   UniversityUserProfile,
   IndustryUserProfile,
 } from "@/services/profile/profile-types"
+import { CitizenProfileView } from "./citizen-profile-view"
+import { StudentProfileView } from "./student-profile-view"
 
 export interface ProfileDetailsProps {
   profile: UserProfile
@@ -116,94 +116,11 @@ export function ProfileDetails({ profile, isOwner = true }: ProfileDetailsProps)
             </p>
           </div>
 
-          {/* CITIZEN PUBLIC PROFILE */}
-          {citizen && (
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div className="rounded-2xl border border-border bg-card p-5 space-y-3">
-                <h4 className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
-                  Civic Directives Logged
-                </h4>
-                <div className="flex items-baseline gap-2">
-                  <span className="text-2xl font-black text-foreground font-mono">
-                    {citizen.problemsReportedCount}
-                  </span>
-                  <span className="text-xs text-muted-foreground">Community Problem Submissions</span>
-                </div>
-              </div>
+          {/* CITIZEN PROFILE */}
+          {citizen && <CitizenProfileView profile={citizen} />}
 
-              <div className="rounded-2xl border border-border bg-card p-5 space-y-3">
-                <h4 className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
-                  Reputation Metric
-                </h4>
-                <div className="flex items-baseline gap-2">
-                  <span className="text-2xl font-black text-foreground font-mono">
-                    {citizen.upvotesGivenCount}
-                  </span>
-                  <span className="text-xs text-muted-foreground">Civic Upvotes & Endorsements</span>
-                </div>
-              </div>
-            </div>
-          )}
-
-          {/* STUDENT PUBLIC PROFILE */}
-          {student && (
-            <div className="space-y-6">
-              <div className="rounded-2xl border border-border bg-card p-6 space-y-4">
-                <h3 className="text-sm font-bold text-foreground flex items-center gap-2">
-                  <GraduationCap className="size-4 text-primary" />
-                  <span>Academic Affiliation</span>
-                </h3>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
-                  <div>
-                    <span className="text-muted-foreground">Enrolled University</span>
-                    <p className="font-bold text-foreground text-sm mt-0.5">{student.university}</p>
-                  </div>
-                  <div>
-                    <span className="text-muted-foreground">Contributions & Prototypes</span>
-                    <p className="font-bold text-foreground text-sm mt-0.5">{student.projectsContributedCount} Completed Capstones</p>
-                  </div>
-                </div>
-              </div>
-
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div className="rounded-2xl border border-border bg-card p-5 space-y-3">
-                  <h4 className="text-xs font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
-                    <Award className="size-3.5 text-primary" />
-                    <span>Technical Capabilities</span>
-                  </h4>
-                  <div className="flex flex-wrap gap-1.5">
-                    {student.skills?.length > 0 ? (
-                      student.skills.map((skill) => (
-                        <Badge key={skill} variant="secondary" className="text-xs">
-                          {skill}
-                        </Badge>
-                      ))
-                    ) : (
-                      <p className="text-xs text-muted-foreground">No technical skills listed.</p>
-                    )}
-                  </div>
-                </div>
-
-                <div className="rounded-2xl border border-border bg-card p-5 space-y-3">
-                  <h4 className="text-xs font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
-                    <Tag className="size-3.5 text-primary" />
-                    <span>Innovation Interests</span>
-                  </h4>
-                  <div className="flex flex-wrap gap-1.5">
-                    {student.interests?.length > 0 ? (
-                      student.interests.map((interest) => (
-                        <Badge key={interest} variant="outline" className="text-xs border-primary/30">
-                          {interest}
-                        </Badge>
-                      ))
-                    ) : (
-                      <p className="text-xs text-muted-foreground">No interest themes chosen.</p>
-                    )}
-                  </div>
-                </div>
-              </div>
-            </div>
-          )}
+          {/* STUDENT PROFILE */}
+          {student && <StudentProfileView profile={student} />}
 
           {/* UNIVERSITY PUBLIC PROFILE */}
           {university && (
