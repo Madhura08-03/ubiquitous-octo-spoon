@@ -77,7 +77,7 @@ export class MockProblemService {
   async getProblems(query?: ProblemFilterQuery): Promise<ProblemQueryResult> {
     await this.simulateDelay(120)
 
-    let results = (await this.getAllProblems())
+    let results = await this.getAllProblems()
 
     // 1. Discovery Section filter (Trending, Critical, Recent, Nearby)
     if (query?.section && query.section !== "all") {
@@ -92,7 +92,9 @@ export class MockProblemService {
           results = results.filter((p) => p.durationMonths <= 3)
           break
         case "nearby":
-          results = results.filter((p) => ["Ranchi", "East Singhbhum", "Hazaribagh", "Ramgarh"].includes(p.district))
+          results = results.filter((p) =>
+            ["Ranchi", "East Singhbhum", "Hazaribagh", "Ramgarh"].includes(p.district)
+          )
           break
         default:
           break
@@ -202,13 +204,49 @@ export class MockProblemService {
   }
 
   /**
-   * Retrieves a single problem by ID with applied session modifications.
+   * Retrieves a single problem by ID with flexible alias matching and session modifications.
    */
   async getProblemById(id: string): Promise<Problem | null> {
     await this.simulateDelay(80)
-    const base = MOCK_PROBLEMS.find((p) => p.id === id)
+    if (!id) return null
+
+    const cleanId = id.trim().toLowerCase()
+    const numericPart = cleanId.replace(/[^0-9]/g, "")
+
+    const base = MOCK_PROBLEMS.find((p) => {
+      if (p.id.toLowerCase() === cleanId) return true
+      const pClean = p.id.toLowerCase().replace(/[-_]/g, "")
+      const searchClean = cleanId.replace(/[-_]/g, "")
+      if (pClean === searchClean) return true
+      if (numericPart && p.id.endsWith(numericPart.padStart(3, "0"))) return true
+      return false
+    })
+
     if (!base) return null
     return this.mergeWithOverrides(base)
+  }
+
+  /**
+   * Retrieves deterministic related problems based on sector domain or district.
+   */
+  async getRelatedProblems(problemId: string, limit = 3): Promise<Problem[]> {
+    await this.simulateDelay(60)
+    const current = await this.getProblemById(problemId)
+    if (!current) return []
+
+    const all = await this.getAllProblems()
+    const others = all.filter((p) => p.id !== current.id)
+
+    // Score relatedness: same domain (+3), same district (+2)
+    const scored = others.map((p) => {
+      let score = 0
+      if (p.domain === current.domain) score += 3
+      if (p.district === current.district) score += 2
+      return { problem: p, score }
+    })
+
+    scored.sort((a, b) => b.score - a.score || b.problem.relevanceScore - a.problem.relevanceScore)
+    return scored.slice(0, limit).map((s) => s.problem)
   }
 
   /**
@@ -287,14 +325,14 @@ export class MockProblemService {
   ): Promise<Problem> {
     await this.simulateDelay(250)
 
-    const base = MOCK_PROBLEMS.find((p) => p.id === problemId)
+    const base = await this.getProblemById(problemId)
     if (!base) {
       throw new Error(`Problem with ID ${problemId} not found.`)
     }
 
     const newReport: CommunityReport = {
       id: `rep_${Date.now()}_${Math.floor(Math.random() * 1000)}`,
-      problemId,
+      problemId: base.id,
       location: payload.location,
       mediaUrl: payload.mediaUrl,
       note: payload.note,
@@ -302,10 +340,10 @@ export class MockProblemService {
     }
 
     const overrides = this.getStoredOverrides()
-    const existingForProblem = overrides[problemId] || {}
+    const existingForProblem = overrides[base.id] || {}
     const existingReports = existingForProblem.reports || []
 
-    overrides[problemId] = {
+    overrides[base.id] = {
       ...existingForProblem,
       reports: [...existingReports, newReport],
     }
