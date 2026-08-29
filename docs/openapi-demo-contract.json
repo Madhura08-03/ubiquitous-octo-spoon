@@ -1,0 +1,2002 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "Samanvay API",
+    "version": "0.1.0"
+  },
+  "paths": {
+    "/health": {
+      "get": {
+        "tags": [
+          "Health"
+        ],
+        "summary": "Health Check",
+        "operationId": "health_check_health_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          }
+        }
+      }
+    },
+    "/auth/token": {
+      "post": {
+        "tags": [
+          "Authentication"
+        ],
+        "summary": "Login For Access Token",
+        "operationId": "login_for_access_token_auth_token_post",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Token"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/auth/me": {
+      "get": {
+        "tags": [
+          "Dev RBAC Tests"
+        ],
+        "summary": "Read Users Me",
+        "operationId": "read_users_me_auth_me_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UserPublic"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ]
+      }
+    },
+    "/auth/test/citizen": {
+      "get": {
+        "tags": [
+          "Dev RBAC Tests"
+        ],
+        "summary": "Test Citizen Role",
+        "operationId": "test_citizen_role_auth_test_citizen_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ]
+      }
+    },
+    "/auth/test/student": {
+      "get": {
+        "tags": [
+          "Dev RBAC Tests"
+        ],
+        "summary": "Test Student Role",
+        "operationId": "test_student_role_auth_test_student_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ]
+      }
+    },
+    "/auth/test/university": {
+      "get": {
+        "tags": [
+          "Dev RBAC Tests"
+        ],
+        "summary": "Test University Role",
+        "operationId": "test_university_role_auth_test_university_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ]
+      }
+    },
+    "/auth/test/industry": {
+      "get": {
+        "tags": [
+          "Dev RBAC Tests"
+        ],
+        "summary": "Test Industry Role",
+        "operationId": "test_industry_role_auth_test_industry_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ]
+      }
+    },
+    "/auth/test/government": {
+      "get": {
+        "tags": [
+          "Dev RBAC Tests"
+        ],
+        "summary": "Test Government Role",
+        "operationId": "test_government_role_auth_test_government_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ]
+      }
+    },
+    "/reports": {
+      "post": {
+        "tags": [
+          "Citizen Reports"
+        ],
+        "summary": "Submit a citizen civic report",
+        "description": "Allows authenticated CITIZEN users to submit a societal or civic problem report.",
+        "operationId": "create_citizen_report_reports_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ReportCreate"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReportResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ]
+      }
+    },
+    "/problems": {
+      "get": {
+        "tags": [
+          "Student Problem Feed"
+        ],
+        "summary": "List standardized societal problems",
+        "description": "Student discovery feed for standardized problems. Supports filtering by domain, geographic radius (Haversine), minimum priority score, and status. Zero citizen PII is exposed.",
+        "operationId": "get_standardized_problems_problems_get",
+        "parameters": [
+          {
+            "name": "domain",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "$ref": "#/components/schemas/ProblemDomain"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Filter by citizen-selected domain",
+              "title": "Domain"
+            },
+            "description": "Filter by citizen-selected domain"
+          },
+          {
+            "name": "latitude",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "number",
+                  "maximum": 90.0,
+                  "minimum": -90.0
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Center latitude for distance filtering",
+              "title": "Latitude"
+            },
+            "description": "Center latitude for distance filtering"
+          },
+          {
+            "name": "longitude",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "number",
+                  "maximum": 180.0,
+                  "minimum": -180.0
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Center longitude for distance filtering",
+              "title": "Longitude"
+            },
+            "description": "Center longitude for distance filtering"
+          },
+          {
+            "name": "radius_km",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "number",
+                  "maximum": 100.0,
+                  "minimum": 1.0
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Search radius in kilometers (default: 25 km, max: 100 km)",
+              "title": "Radius Km"
+            },
+            "description": "Search radius in kilometers (default: 25 km, max: 100 km)"
+          },
+          {
+            "name": "min_priority_score",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "number",
+                  "maximum": 100.0,
+                  "minimum": 0.0
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Minimum priority score (0-100)",
+              "title": "Min Priority Score"
+            },
+            "description": "Minimum priority score (0-100)"
+          },
+          {
+            "name": "status",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "$ref": "#/components/schemas/ProblemStatus"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Problem status (defaults to OPEN & UNDER_INVESTIGATION)",
+              "title": "Status"
+            },
+            "description": "Problem status (defaults to OPEN & UNDER_INVESTIGATION)"
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 50,
+              "minimum": 1,
+              "description": "Pagination limit (max: 50)",
+              "default": 20,
+              "title": "Limit"
+            },
+            "description": "Pagination limit (max: 50)"
+          },
+          {
+            "name": "offset",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 0,
+              "description": "Pagination offset",
+              "default": 0,
+              "title": "Offset"
+            },
+            "description": "Pagination offset"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemListResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/teams": {
+      "post": {
+        "tags": [
+          "Teams & Mentor Adoption"
+        ],
+        "summary": "Create a student team around an adopted problem",
+        "description": "Allows verified UNIVERSITY mentors to adopt a standardized problem and create a student team.",
+        "operationId": "create_team_teams_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TeamCreate"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TeamResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ]
+      }
+    },
+    "/teams/{team_id}/members": {
+      "post": {
+        "tags": [
+          "Teams & Mentor Adoption"
+        ],
+        "summary": "Add a student member to a team",
+        "description": "Allows the UNIVERSITY mentor who created the team to assign student members (max 8 students).",
+        "operationId": "add_team_member_teams__team_id__members_post",
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "team_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Team Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TeamMemberCreate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TeamMemberResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/solutions": {
+      "post": {
+        "tags": [
+          "Solutions & Industry Review"
+        ],
+        "summary": "Propose a solution for an adopted problem",
+        "description": "Allows authenticated and verified UNIVERSITY mentors to propose a technical solution for their team.",
+        "operationId": "create_solution_solutions_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SolutionCreate"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SolutionResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ]
+      }
+    },
+    "/solutions/{solution_id}/industry-review": {
+      "post": {
+        "tags": [
+          "Solutions & Industry Review"
+        ],
+        "summary": "Review a proposed solution",
+        "description": "Allows verified INDUSTRY users to approve, request changes, or reject a submitted solution.",
+        "operationId": "review_solution_solutions__solution_id__industry_review_post",
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "solution_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Solution Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/IndustryReviewCreate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/IndustryReviewResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/rankings/universities": {
+      "get": {
+        "tags": [
+          "Leaderboards & Rankings"
+        ],
+        "summary": "University Leaderboard",
+        "description": "Public leaderboard displaying university mentors ranked by cumulative verified points.",
+        "operationId": "get_university_rankings_rankings_universities_get",
+        "parameters": [
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 50,
+              "minimum": 1,
+              "description": "Pagination limit (max: 50)",
+              "default": 20,
+              "title": "Limit"
+            },
+            "description": "Pagination limit (max: 50)"
+          },
+          {
+            "name": "offset",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 0,
+              "description": "Pagination offset",
+              "default": 0,
+              "title": "Offset"
+            },
+            "description": "Pagination offset"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UniversityRankingResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/rankings/industry": {
+      "get": {
+        "tags": [
+          "Leaderboards & Rankings"
+        ],
+        "summary": "Industry Leaderboard",
+        "description": "Public leaderboard displaying industry partners ranked by cumulative verified contribution points.",
+        "operationId": "get_industry_rankings_rankings_industry_get",
+        "parameters": [
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 50,
+              "minimum": 1,
+              "description": "Pagination limit (max: 50)",
+              "default": 20,
+              "title": "Limit"
+            },
+            "description": "Pagination limit (max: 50)"
+          },
+          {
+            "name": "offset",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 0,
+              "description": "Pagination offset",
+              "default": 0,
+              "title": "Offset"
+            },
+            "description": "Pagination offset"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/IndustryRankingResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/public/problems": {
+      "get": {
+        "tags": [
+          "Public APIs & Analytics"
+        ],
+        "summary": "Public Societal Problems",
+        "description": "Public feed of standardized societal problems and status. Zero citizen PII is exposed.",
+        "operationId": "get_public_problems_public_problems_get",
+        "parameters": [
+          {
+            "name": "domain",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "$ref": "#/components/schemas/ProblemDomain"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Filter by problem domain",
+              "title": "Domain"
+            },
+            "description": "Filter by problem domain"
+          },
+          {
+            "name": "latitude",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "number",
+                  "maximum": 90.0,
+                  "minimum": -90.0
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Center latitude for distance filter",
+              "title": "Latitude"
+            },
+            "description": "Center latitude for distance filter"
+          },
+          {
+            "name": "longitude",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "number",
+                  "maximum": 180.0,
+                  "minimum": -180.0
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Center longitude for distance filter",
+              "title": "Longitude"
+            },
+            "description": "Center longitude for distance filter"
+          },
+          {
+            "name": "radius_km",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "number",
+                  "maximum": 100.0,
+                  "minimum": 1.0
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Radius in km (default 25, max 100)",
+              "title": "Radius Km"
+            },
+            "description": "Radius in km (default 25, max 100)"
+          },
+          {
+            "name": "status",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "$ref": "#/components/schemas/ProblemStatus"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Problem status filter",
+              "title": "Status"
+            },
+            "description": "Problem status filter"
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 50,
+              "minimum": 1,
+              "description": "Pagination limit (max: 50)",
+              "default": 20,
+              "title": "Limit"
+            },
+            "description": "Pagination limit (max: 50)"
+          },
+          {
+            "name": "offset",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 0,
+              "description": "Pagination offset",
+              "default": 0,
+              "title": "Offset"
+            },
+            "description": "Pagination offset"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PublicProblemListResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/public/analytics": {
+      "get": {
+        "tags": [
+          "Public APIs & Analytics"
+        ],
+        "summary": "Public Impact Analytics",
+        "description": "High-level public analytics on societal problems, reports, teams, and industry solutions.",
+        "operationId": "get_public_analytics_public_analytics_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PublicAnalyticsResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "DomainAnalyticsItem": {
+        "properties": {
+          "domain": {
+            "type": "string",
+            "title": "Domain"
+          },
+          "problem_count": {
+            "type": "integer",
+            "title": "Problem Count"
+          },
+          "report_count": {
+            "type": "integer",
+            "title": "Report Count"
+          }
+        },
+        "type": "object",
+        "required": [
+          "domain",
+          "problem_count",
+          "report_count"
+        ],
+        "title": "DomainAnalyticsItem"
+      },
+      "HTTPValidationError": {
+        "properties": {
+          "detail": {
+            "items": {
+              "$ref": "#/components/schemas/ValidationError"
+            },
+            "type": "array",
+            "title": "Detail"
+          }
+        },
+        "type": "object",
+        "title": "HTTPValidationError"
+      },
+      "IndustryRankingItem": {
+        "properties": {
+          "rank": {
+            "type": "integer",
+            "title": "Rank"
+          },
+          "industry_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Industry Id"
+          },
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "points": {
+            "type": "integer",
+            "title": "Points"
+          },
+          "successful_contributions": {
+            "type": "integer",
+            "title": "Successful Contributions"
+          }
+        },
+        "type": "object",
+        "required": [
+          "rank",
+          "industry_id",
+          "name",
+          "points",
+          "successful_contributions"
+        ],
+        "title": "IndustryRankingItem"
+      },
+      "IndustryRankingResponse": {
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/IndustryRankingItem"
+            },
+            "type": "array",
+            "title": "Items"
+          },
+          "total": {
+            "type": "integer",
+            "title": "Total"
+          },
+          "limit": {
+            "type": "integer",
+            "title": "Limit"
+          },
+          "offset": {
+            "type": "integer",
+            "title": "Offset"
+          }
+        },
+        "type": "object",
+        "required": [
+          "items",
+          "total",
+          "limit",
+          "offset"
+        ],
+        "title": "IndustryRankingResponse"
+      },
+      "IndustryReviewCreate": {
+        "properties": {
+          "decision": {
+            "$ref": "#/components/schemas/IndustryReviewDecision"
+          },
+          "review_comment": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 2000
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Review Comment"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "decision"
+        ],
+        "title": "IndustryReviewCreate"
+      },
+      "IndustryReviewDecision": {
+        "type": "string",
+        "enum": [
+          "APPROVE",
+          "NEEDS_CHANGES",
+          "REJECT"
+        ],
+        "title": "IndustryReviewDecision"
+      },
+      "IndustryReviewResponse": {
+        "properties": {
+          "solution_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Solution Id"
+          },
+          "status": {
+            "$ref": "#/components/schemas/SolutionStatus"
+          },
+          "industry_review_status": {
+            "$ref": "#/components/schemas/IndustryReviewStatus"
+          },
+          "decision": {
+            "$ref": "#/components/schemas/IndustryReviewDecision"
+          }
+        },
+        "type": "object",
+        "required": [
+          "solution_id",
+          "status",
+          "industry_review_status",
+          "decision"
+        ],
+        "title": "IndustryReviewResponse"
+      },
+      "IndustryReviewStatus": {
+        "type": "string",
+        "enum": [
+          "PENDING",
+          "APPROVED",
+          "REJECTED"
+        ],
+        "title": "IndustryReviewStatus"
+      },
+      "ProblemDomain": {
+        "type": "string",
+        "enum": [
+          "WATER_MANAGEMENT",
+          "ROADS_INFRASTRUCTURE",
+          "HEALTHCARE_SANITATION",
+          "EDUCATION",
+          "AGRICULTURE",
+          "ENERGY_ELECTRICITY",
+          "ENVIRONMENT_WASTE",
+          "PUBLIC_SAFETY",
+          "GOVERNANCE_SERVICES",
+          "OTHER"
+        ],
+        "title": "ProblemDomain"
+      },
+      "ProblemListResponse": {
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/ProblemRead"
+            },
+            "type": "array",
+            "title": "Items"
+          },
+          "total": {
+            "type": "integer",
+            "title": "Total"
+          },
+          "limit": {
+            "type": "integer",
+            "title": "Limit"
+          },
+          "offset": {
+            "type": "integer",
+            "title": "Offset"
+          }
+        },
+        "type": "object",
+        "required": [
+          "items",
+          "total",
+          "limit",
+          "offset"
+        ],
+        "title": "ProblemListResponse"
+      },
+      "ProblemRead": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "title": {
+            "type": "string",
+            "title": "Title"
+          },
+          "domain": {
+            "type": "string",
+            "title": "Domain"
+          },
+          "problem_summary": {
+            "type": "string",
+            "title": "Problem Summary"
+          },
+          "affected_community": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Affected Community"
+          },
+          "observed_impact": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Observed Impact"
+          },
+          "latitude": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Latitude"
+          },
+          "longitude": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Longitude"
+          },
+          "priority_score": {
+            "type": "number",
+            "title": "Priority Score"
+          },
+          "report_count": {
+            "type": "integer",
+            "title": "Report Count"
+          },
+          "evidence_count": {
+            "type": "integer",
+            "title": "Evidence Count"
+          },
+          "status": {
+            "$ref": "#/components/schemas/ProblemStatus"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "title",
+          "domain",
+          "problem_summary",
+          "priority_score",
+          "report_count",
+          "evidence_count",
+          "status",
+          "created_at"
+        ],
+        "title": "ProblemRead"
+      },
+      "ProblemStatus": {
+        "type": "string",
+        "enum": [
+          "OPEN",
+          "UNDER_INVESTIGATION",
+          "ADOPTED",
+          "IN_DEVELOPMENT",
+          "PROTOTYPE",
+          "GOVERNMENT_REVIEW",
+          "RESOLVED"
+        ],
+        "title": "ProblemStatus"
+      },
+      "PublicAnalyticsResponse": {
+        "properties": {
+          "total_problems": {
+            "type": "integer",
+            "title": "Total Problems"
+          },
+          "total_reports": {
+            "type": "integer",
+            "title": "Total Reports"
+          },
+          "open_problems": {
+            "type": "integer",
+            "title": "Open Problems"
+          },
+          "in_progress_problems": {
+            "type": "integer",
+            "title": "In Progress Problems"
+          },
+          "resolved_problems": {
+            "type": "integer",
+            "title": "Resolved Problems"
+          },
+          "total_evidence_items": {
+            "type": "integer",
+            "title": "Total Evidence Items"
+          },
+          "total_teams": {
+            "type": "integer",
+            "title": "Total Teams"
+          },
+          "total_solutions": {
+            "type": "integer",
+            "title": "Total Solutions"
+          },
+          "industry_approved_solutions": {
+            "type": "integer",
+            "title": "Industry Approved Solutions"
+          },
+          "approved_prototypes": {
+            "type": "integer",
+            "title": "Approved Prototypes"
+          },
+          "domain_breakdown": {
+            "items": {
+              "$ref": "#/components/schemas/DomainAnalyticsItem"
+            },
+            "type": "array",
+            "title": "Domain Breakdown"
+          }
+        },
+        "type": "object",
+        "required": [
+          "total_problems",
+          "total_reports",
+          "open_problems",
+          "in_progress_problems",
+          "resolved_problems",
+          "total_evidence_items",
+          "total_teams",
+          "total_solutions",
+          "industry_approved_solutions",
+          "approved_prototypes",
+          "domain_breakdown"
+        ],
+        "title": "PublicAnalyticsResponse"
+      },
+      "PublicProblemListResponse": {
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/PublicProblemResponse"
+            },
+            "type": "array",
+            "title": "Items"
+          },
+          "total": {
+            "type": "integer",
+            "title": "Total"
+          },
+          "limit": {
+            "type": "integer",
+            "title": "Limit"
+          },
+          "offset": {
+            "type": "integer",
+            "title": "Offset"
+          }
+        },
+        "type": "object",
+        "required": [
+          "items",
+          "total",
+          "limit",
+          "offset"
+        ],
+        "title": "PublicProblemListResponse"
+      },
+      "PublicProblemResponse": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "title": {
+            "type": "string",
+            "title": "Title"
+          },
+          "domain": {
+            "type": "string",
+            "title": "Domain"
+          },
+          "problem_summary": {
+            "type": "string",
+            "title": "Problem Summary"
+          },
+          "observed_impact": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Observed Impact"
+          },
+          "latitude": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Latitude"
+          },
+          "longitude": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Longitude"
+          },
+          "priority_score": {
+            "type": "number",
+            "title": "Priority Score"
+          },
+          "report_count": {
+            "type": "integer",
+            "title": "Report Count"
+          },
+          "evidence_count": {
+            "type": "integer",
+            "title": "Evidence Count"
+          },
+          "status": {
+            "$ref": "#/components/schemas/ProblemStatus"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "title",
+          "domain",
+          "problem_summary",
+          "priority_score",
+          "report_count",
+          "evidence_count",
+          "status",
+          "created_at"
+        ],
+        "title": "PublicProblemResponse"
+      },
+      "RawReportStatus": {
+        "type": "string",
+        "enum": [
+          "RECEIVED",
+          "UNDER_REVIEW",
+          "PROCESSED"
+        ],
+        "title": "RawReportStatus"
+      },
+      "ReportCreate": {
+        "properties": {
+          "description": {
+            "type": "string",
+            "maxLength": 3000,
+            "minLength": 20,
+            "title": "Description"
+          },
+          "domain": {
+            "$ref": "#/components/schemas/ProblemDomain"
+          },
+          "latitude": {
+            "type": "number",
+            "maximum": 90.0,
+            "minimum": -90.0,
+            "title": "Latitude"
+          },
+          "longitude": {
+            "type": "number",
+            "maximum": 180.0,
+            "minimum": -180.0,
+            "title": "Longitude"
+          },
+          "title": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 150
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Title"
+          },
+          "photo_url": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 500
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Photo Url"
+          }
+        },
+        "type": "object",
+        "required": [
+          "description",
+          "domain",
+          "latitude",
+          "longitude"
+        ],
+        "title": "ReportCreate"
+      },
+      "ReportResponse": {
+        "properties": {
+          "report_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Report Id"
+          },
+          "status": {
+            "$ref": "#/components/schemas/RawReportStatus"
+          },
+          "processing_status": {
+            "type": "string",
+            "title": "Processing Status",
+            "default": "STUB"
+          },
+          "message": {
+            "type": "string",
+            "title": "Message",
+            "default": "Your problem report has been received."
+          }
+        },
+        "type": "object",
+        "required": [
+          "report_id",
+          "status"
+        ],
+        "title": "ReportResponse"
+      },
+      "SolutionCreate": {
+        "properties": {
+          "team_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Team Id"
+          },
+          "title": {
+            "type": "string",
+            "maxLength": 255,
+            "minLength": 5,
+            "title": "Title"
+          },
+          "description": {
+            "type": "string",
+            "maxLength": 5000,
+            "minLength": 20,
+            "title": "Description"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "team_id",
+          "title",
+          "description"
+        ],
+        "title": "SolutionCreate"
+      },
+      "SolutionResponse": {
+        "properties": {
+          "solution_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Solution Id"
+          },
+          "problem_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Problem Id"
+          },
+          "team_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Team Id"
+          },
+          "proposed_by": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Proposed By"
+          },
+          "title": {
+            "type": "string",
+            "title": "Title"
+          },
+          "description": {
+            "type": "string",
+            "title": "Description"
+          },
+          "status": {
+            "$ref": "#/components/schemas/SolutionStatus"
+          },
+          "industry_review_status": {
+            "$ref": "#/components/schemas/IndustryReviewStatus"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "solution_id",
+          "problem_id",
+          "team_id",
+          "proposed_by",
+          "title",
+          "description",
+          "status",
+          "industry_review_status",
+          "created_at"
+        ],
+        "title": "SolutionResponse"
+      },
+      "SolutionStatus": {
+        "type": "string",
+        "enum": [
+          "DRAFT",
+          "SUBMITTED",
+          "INDUSTRY_REVIEW",
+          "APPROVED",
+          "REJECTED"
+        ],
+        "title": "SolutionStatus"
+      },
+      "TeamCreate": {
+        "properties": {
+          "problem_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Problem Id"
+          },
+          "name": {
+            "type": "string",
+            "maxLength": 100,
+            "minLength": 2,
+            "title": "Name"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "problem_id",
+          "name"
+        ],
+        "title": "TeamCreate"
+      },
+      "TeamMemberCreate": {
+        "properties": {
+          "student_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Student Id"
+          },
+          "role_in_team": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 100
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Role In Team",
+            "default": "Member"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "student_id"
+        ],
+        "title": "TeamMemberCreate"
+      },
+      "TeamMemberResponse": {
+        "properties": {
+          "team_member_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Team Member Id"
+          },
+          "team_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Team Id"
+          },
+          "student_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Student Id"
+          },
+          "role_in_team": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Role In Team"
+          },
+          "team_status": {
+            "$ref": "#/components/schemas/TeamStatus"
+          },
+          "joined_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Joined At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "team_member_id",
+          "team_id",
+          "student_id",
+          "role_in_team",
+          "team_status",
+          "joined_at"
+        ],
+        "title": "TeamMemberResponse"
+      },
+      "TeamResponse": {
+        "properties": {
+          "team_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Team Id"
+          },
+          "problem_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Problem Id"
+          },
+          "university_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "University Id"
+          },
+          "mentor_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Mentor Id"
+          },
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "status": {
+            "$ref": "#/components/schemas/TeamStatus"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "team_id",
+          "problem_id",
+          "university_id",
+          "mentor_id",
+          "name",
+          "status",
+          "created_at"
+        ],
+        "title": "TeamResponse"
+      },
+      "TeamStatus": {
+        "type": "string",
+        "enum": [
+          "FORMING",
+          "ACTIVE",
+          "COMPLETED",
+          "DISBANDED"
+        ],
+        "title": "TeamStatus"
+      },
+      "Token": {
+        "properties": {
+          "access_token": {
+            "type": "string",
+            "title": "Access Token"
+          },
+          "token_type": {
+            "type": "string",
+            "title": "Token Type",
+            "default": "bearer"
+          }
+        },
+        "type": "object",
+        "required": [
+          "access_token"
+        ],
+        "title": "Token"
+      },
+      "UniversityRankingItem": {
+        "properties": {
+          "rank": {
+            "type": "integer",
+            "title": "Rank"
+          },
+          "university_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "University Id"
+          },
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "points": {
+            "type": "integer",
+            "title": "Points"
+          },
+          "successful_milestones": {
+            "type": "integer",
+            "title": "Successful Milestones"
+          }
+        },
+        "type": "object",
+        "required": [
+          "rank",
+          "university_id",
+          "name",
+          "points",
+          "successful_milestones"
+        ],
+        "title": "UniversityRankingItem"
+      },
+      "UniversityRankingResponse": {
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/UniversityRankingItem"
+            },
+            "type": "array",
+            "title": "Items"
+          },
+          "total": {
+            "type": "integer",
+            "title": "Total"
+          },
+          "limit": {
+            "type": "integer",
+            "title": "Limit"
+          },
+          "offset": {
+            "type": "integer",
+            "title": "Offset"
+          }
+        },
+        "type": "object",
+        "required": [
+          "items",
+          "total",
+          "limit",
+          "offset"
+        ],
+        "title": "UniversityRankingResponse"
+      },
+      "UserPublic": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "email": {
+            "type": "string",
+            "title": "Email"
+          },
+          "full_name": {
+            "type": "string",
+            "title": "Full Name"
+          },
+          "role": {
+            "$ref": "#/components/schemas/UserRole"
+          },
+          "is_verified": {
+            "type": "boolean",
+            "title": "Is Verified"
+          },
+          "is_active": {
+            "type": "boolean",
+            "title": "Is Active"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Updated At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "email",
+          "full_name",
+          "role",
+          "is_verified",
+          "is_active",
+          "created_at",
+          "updated_at"
+        ],
+        "title": "UserPublic"
+      },
+      "UserRole": {
+        "type": "string",
+        "enum": [
+          "CITIZEN",
+          "STUDENT",
+          "UNIVERSITY",
+          "INDUSTRY",
+          "GOVERNMENT"
+        ],
+        "title": "UserRole"
+      },
+      "ValidationError": {
+        "properties": {
+          "loc": {
+            "items": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "integer"
+                }
+              ]
+            },
+            "type": "array",
+            "title": "Location"
+          },
+          "msg": {
+            "type": "string",
+            "title": "Message"
+          },
+          "type": {
+            "type": "string",
+            "title": "Error Type"
+          },
+          "input": {
+            "title": "Input"
+          },
+          "ctx": {
+            "type": "object",
+            "title": "Context"
+          }
+        },
+        "type": "object",
+        "required": [
+          "loc",
+          "msg",
+          "type"
+        ],
+        "title": "ValidationError"
+      }
+    },
+    "securitySchemes": {
+      "OAuth2PasswordBearer": {
+        "type": "oauth2",
+        "flows": {
+          "password": {
+            "scopes": {},
+            "tokenUrl": "/auth/token"
+          }
+        }
+      }
+    }
+  }
+}
