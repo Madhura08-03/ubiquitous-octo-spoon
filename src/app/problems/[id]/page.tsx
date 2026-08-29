@@ -24,6 +24,7 @@ import { ProblemStatusTimeline } from "@/features/problems/components/problem-st
 import { RelatedProblemsSection } from "@/features/problems/components/related-problems-section"
 import { ReportProblemModal } from "@/features/problems/components/report-problem-modal"
 import { LoginPromptDialog } from "@/features/problems/components/login-prompt-dialog"
+import { SolutionProposalsSection } from "@/features/solutions/components/solution-proposals-section"
 import { Problem } from "@/services/problems/problem-types"
 import { problemService } from "@/services/problems/problem-service"
 import { authService } from "@/services/auth/auth-service"
@@ -278,7 +279,13 @@ export default function ProblemDetailsPage() {
             {/* 6. Status Lifecycle Timeline */}
             <ProblemStatusTimeline problem={problem} />
 
-            {/* 7. Community Participation Callout */}
+            {/* 7. Multi-University Solution Proposals Section */}
+            <SolutionProposalsSection
+              problemId={problem.id}
+              problemTitle={problem.title}
+            />
+
+            {/* 8. Community Participation Callout */}
             <section className="rounded-2xl border border-primary/30 bg-primary/5 p-6 sm:p-8 text-left space-y-4">
               <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
                 <div className="space-y-1.5 max-w-xl">

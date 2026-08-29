@@ -6,7 +6,6 @@ import {
   Sparkles,
   CheckCircle2,
   MapPin,
-  ExternalLink,
 } from "lucide-react"
 
 import { buttonVariants } from "@/components/ui/button"
@@ -86,15 +85,14 @@ export function RecommendedProblemsCard({ problems }: RecommendedProblemsCardPro
               </span>
 
               <Link
-                href={"/problems/" + rec.problemId}
+                href={"/university/problems/" + rec.problemId + "/propose"}
                 className={buttonVariants({
-                  variant: "ghost",
+                  variant: "default",
                   size: "sm",
-                  className: "text-[11px] h-7 px-2 font-bold text-primary hover:bg-primary/10 gap-1",
+                  className: "text-[11px] h-7 px-2 font-bold bg-primary text-primary-foreground hover:bg-primary/90 gap-1",
                 })}
               >
-                <span>View Details</span>
-                <ExternalLink className="size-3" />
+                <span>Propose Solution</span>
               </Link>
             </div>
           </div>

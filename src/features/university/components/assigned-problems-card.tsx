@@ -40,14 +40,14 @@ export function AssignedProblemsCard({
         <div className="space-y-0.5">
           <h3 className="text-sm font-bold text-foreground flex items-center gap-2">
             <FileQuestion className="size-4 text-primary" />
-            <span>Assigned Societal Challenges</span>
+            <span>Your Solution Proposals</span>
           </h3>
           <p className="text-xs text-muted-foreground">
-            Problems verified by Government Nodal Teams and officially assigned to university departments.
+            Technical R&D proposals voluntarily submitted by your university faculty and students for verified civic problems.
           </p>
         </div>
         <Badge variant="outline" className="text-xs font-semibold">
-          {problems.length} Assigned
+          {problems.length} Proposals
         </Badge>
       </div>
 

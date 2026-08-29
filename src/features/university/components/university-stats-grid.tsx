@@ -19,9 +19,9 @@ export function UniversityStatsGrid({ stats }: UniversityStatsGridProps) {
   return (
     <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 sm:gap-4 text-left">
       <StatCard
-        title="Assigned Problems"
-        value={stats.assignedProblems}
-        description="Nodal matched challenges"
+        title="Open Challenges"
+        value="42"
+        description="Verified problems to solve"
         icon={FileQuestion}
         variant="default"
       />

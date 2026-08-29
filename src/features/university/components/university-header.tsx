@@ -15,6 +15,7 @@ import { Badge } from "@/components/ui/badge"
 import {
   DropdownMenu,
   DropdownMenuContent,
+  DropdownMenuGroup,
   DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
@@ -89,27 +90,29 @@ export function UniversityHeader({
             }
           />
           <DropdownMenuContent align="end" className="w-80 p-2 text-left">
-            <DropdownMenuLabel className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
-              Recent Institutional Alerts
-            </DropdownMenuLabel>
-            <DropdownMenuSeparator />
-            <div className="space-y-2 py-1 text-xs">
-              <div className="p-2 rounded-lg bg-muted/40 hover:bg-muted transition-colors space-y-0.5">
-                <p className="font-bold text-foreground">New Problem Match Assigned</p>
-                <p className="text-[11px] text-muted-foreground">
-                  Government Nodal Team matched Ormanjhi Groundwater challenge to your Civil Engg cell.
-                </p>
-                <span className="text-[10px] text-primary font-mono font-medium">10 mins ago</span>
-              </div>
+            <DropdownMenuGroup>
+              <DropdownMenuLabel className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
+                Recent Institutional Alerts
+              </DropdownMenuLabel>
+              <DropdownMenuSeparator />
+              <div className="space-y-2 py-1 text-xs">
+                <div className="p-2 rounded-lg bg-muted/40 hover:bg-muted transition-colors space-y-0.5">
+                  <p className="font-bold text-foreground">Open Challenge Recommendation</p>
+                  <p className="text-[11px] text-muted-foreground">
+                    New high-priority water challenge in Ormanjhi matched to your Civil & Environmental Engg cell.
+                  </p>
+                  <span className="text-[10px] text-primary font-mono font-medium">10 mins ago</span>
+                </div>
 
-              <div className="p-2 rounded-lg bg-muted/40 hover:bg-muted transition-colors space-y-0.5">
-                <p className="font-bold text-foreground">CSR Grant Approved</p>
-                <p className="text-[11px] text-muted-foreground">
-                  Tata Steel CSR approved ₹4.5L hardware prototyping sponsorship.
-                </p>
-                <span className="text-[10px] text-primary font-mono font-medium">2 hours ago</span>
+                <div className="p-2 rounded-lg bg-muted/40 hover:bg-muted transition-colors space-y-0.5">
+                  <p className="font-bold text-foreground">CSR Sponsorship Interest</p>
+                  <p className="text-[11px] text-muted-foreground">
+                    Tata Steel CSR expressed interest in your proposed drinking water filtration prototype.
+                  </p>
+                  <span className="text-[10px] text-primary font-mono font-medium">2 hours ago</span>
+                </div>
               </div>
-            </div>
+            </DropdownMenuGroup>
           </DropdownMenuContent>
         </DropdownMenu>
 

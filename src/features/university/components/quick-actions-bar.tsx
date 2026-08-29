@@ -27,7 +27,7 @@ export function QuickActionsBar() {
         })}
       >
         <FileQuestion className="size-3.5" />
-        <span>Review Problems</span>
+        <span>Explore Open Challenges</span>
       </Link>
 
       <a
