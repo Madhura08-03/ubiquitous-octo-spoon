@@ -7,6 +7,10 @@ import {
   CommunityReport,
   UserReportRecord,
   CreateProblemPayload,
+  ProblemAnalysisResult,
+  SimilarProblemMatch,
+  ProblemDomain,
+  ProblemPriority,
 } from "./problem-types"
 import { MOCK_PROBLEMS } from "@/data/problems/problem-data"
 
@@ -225,6 +229,200 @@ export class MockProblemService {
       .sort((a, b) => b.score - a.score || b.problem.reportCount - a.problem.reportCount)
       .slice(0, 4)
       .map((item) => item.problem)
+  }
+
+  /**
+   * AI-Assisted Problem Analysis & Duplicate Detection.
+   * Analyzes problem title and description to classify domain, evaluate priority & severity,
+   * extract key keywords, compute AI similarity percentages, and recommend the best next action.
+   */
+  async analyzeProblem(
+    title: string,
+    description: string,
+    domain?: string,
+    district?: string
+  ): Promise<ProblemAnalysisResult> {
+    await this.simulateDelay(380)
+
+    const titleKeywords = extractKeywords(title)
+    const descKeywords = extractKeywords(description)
+    const combinedKeywords = Array.from(new Set([...titleKeywords, ...descKeywords]))
+
+    // 1. Domain classification heuristic
+    const domainScores: Record<ProblemDomain, number> = {
+      "Water Management": 0,
+      "Agriculture": 0,
+      "Energy": 0,
+      "Healthcare": 0,
+      "Sanitation": 0,
+      "Education": 0,
+      "Environment": 0,
+      "Urban Development": 0,
+      "Accessibility": 0,
+      "Public Administration": 0,
+      "Rural Livelihoods": 0,
+      "Disaster Management": 0,
+      "Social Development": 0,
+      "Other": 0,
+    }
+
+    const domainIndicators: Record<ProblemDomain, string[]> = {
+      "Water Management": ["water", "borewell", "handpump", "arsenic", "fluoride", "drinking", "contamination", "leakage", "aquifer", "drought", "pipeline", "dam", "well", "pond"],
+      "Energy": ["solar", "electricity", "power", "grid", "outage", "voltage", "transformer", "load", "battery", "generator", "transmission"],
+      "Agriculture": ["crop", "irrigation", "farming", "soil", "harvest", "mahua", "lac", "pest", "farmer", "fertilizer", "paddy", "seed", "agriculture"],
+      "Healthcare": ["health", "hospital", "doctor", "clinic", "medicine", "malnutrition", "anemia", "maternal", "ambulance", "phc", "chc", "nurse", "fever", "disease"],
+      "Sanitation": ["garbage", "drainage", "sewage", "trash", "waste", "toilet", "sanitation", "pollution", "dumping", "plastic", "cleanliness"],
+      "Environment": ["forest", "tree", "mining", "dust", "smoke", "wildlife", "elephant", "environment", "climate", "pollution", "air", "erosion"],
+      "Education": ["school", "college", "student", "teacher", "classroom", "books", "education", "lab", "dropout", "literacy", "midday"],
+      "Urban Development": ["road", "bridge", "street", "traffic", "transport", "pothole", "urban", "housing", "lighting", "sidewalk", "encroachment"],
+      "Accessibility": ["disabled", "ramp", "wheelchair", "blind", "accessible", "accessibility", "divyang", "braille", "hearing"],
+      "Public Administration": ["panchayat", "block", "scheme", "aadhaar", "ration", "pension", "administrative", "certificate", "bpl", "portal"],
+      "Rural Livelihoods": ["handicraft", "artisan", "weaving", "tussar", "silk", "livelihood", "tribal craft", "income", "cottage", "bamboo"],
+      "Disaster Management": ["flood", "cyclone", "drought", "landslide", "lightning", "disaster", "fire", "emergency", "monsoon"],
+      "Social Development": ["women", "child", "elderly", "shg", "community", "social", "tribal", "welfare", "inclusion"],
+      "Other": [],
+    }
+
+    const fullText = `${title} ${description}`.toLowerCase()
+    for (const [d, keywords] of Object.entries(domainIndicators) as [ProblemDomain, string[]][]) {
+      for (const kw of keywords) {
+        if (fullText.includes(kw)) {
+          domainScores[d] += 2
+        }
+      }
+    }
+
+    let topDomain: ProblemDomain = "Water Management"
+    let highestDomainScore = 0
+    for (const [d, score] of Object.entries(domainScores) as [ProblemDomain, number][]) {
+      if (score > highestDomainScore) {
+        highestDomainScore = score
+        topDomain = d
+      }
+    }
+
+    if (highestDomainScore === 0 && domain && domain !== "Other") {
+      topDomain = domain as ProblemDomain
+    }
+
+    const domainConfidence = highestDomainScore > 4 ? 94 : highestDomainScore > 0 ? 87 : 72
+
+    // 2. Priority & Severity Classification
+    const criticalWords = ["arsenic", "fluoride", "contamination", "poison", "toxic", "emergency", "hazard", "death", "epidemic", "outage", "collapse", "severe"]
+    const highWords = ["broken", "shortage", "leakage", "damaged", "months", "persistent", "fever", "malnutrition", "waste", "overflow", "danger"]
+
+    let priority: ProblemPriority = "medium"
+    let severity: "low" | "medium" | "high" | "critical" = "medium"
+    let severityReason = "Moderate localized community bottleneck with manageable day-to-day workarounds."
+
+    if (criticalWords.some((w) => fullText.includes(w))) {
+      priority = "critical"
+      severity = "critical"
+      severityReason = "Potential impact on public health and safety requiring urgent administrative intervention."
+    } else if (highWords.some((w) => fullText.includes(w))) {
+      priority = "high"
+      severity = "high"
+      severityReason = "Significant localized disruption affecting daily community livelihoods and civic welfare."
+    } else if (fullText.length > 80) {
+      priority = "medium"
+      severity = "medium"
+      severityReason = "Recurring societal challenge impacting residential productivity and standard living conditions."
+    } else {
+      priority = "low"
+      severity = "low"
+      severityReason = "Minor localized civic concern with manageable alternative workarounds."
+    }
+
+    // 3. Similar problems discovery & AI similarity percentage
+    const allProblems = await this.getAllProblems()
+    const similarMatches: SimilarProblemMatch[] = []
+
+    for (const p of allProblems) {
+      let score = 0
+      const matchReasons: string[] = []
+      const pTitleKeywords = extractKeywords(p.title)
+      const pDescKeywords = extractKeywords(`${p.description} ${p.originalDescription}`)
+      const pFullKeywords = new Set([...pTitleKeywords, ...pDescKeywords])
+
+      // Keyword matches
+      const matchedKw: string[] = []
+      for (const kw of combinedKeywords) {
+        if (pFullKeywords.has(kw)) {
+          score += 3
+          matchedKw.push(kw)
+        }
+      }
+      if (matchedKw.length > 0) {
+        matchReasons.push(`Shared keywords: ${matchedKw.slice(0, 3).join(", ")}`)
+      }
+
+      // Domain match
+      if (p.domain.toLowerCase() === topDomain.toLowerCase()) {
+        score += 4
+        matchReasons.push(`Sector match: ${p.domain}`)
+      }
+
+      // District match
+      if (district && p.district.toLowerCase() === district.toLowerCase()) {
+        score += 3
+        matchReasons.push(`Jurisdiction match: ${p.district} District`)
+      }
+
+      // Substring match
+      const pFull = `${p.title} ${p.description}`.toLowerCase()
+      if (title.trim().length > 5 && pFull.includes(title.trim().toLowerCase())) {
+        score += 6
+        matchReasons.push("Direct phrase similarity in problem description")
+      }
+
+      if (score >= 4) {
+        // Map raw score to realistic percentage (70% - 96%)
+        const similarityScore = Math.min(96, Math.max(70, 64 + score * 3))
+        similarMatches.push({
+          problem: p,
+          similarityScore,
+          matchReasons,
+        })
+      }
+    }
+
+    similarMatches.sort((a, b) => b.similarityScore - a.similarityScore || b.problem.reportCount - a.problem.reportCount)
+    const topMatches = similarMatches.slice(0, 4)
+
+    // 4. Recommendation
+    const bestMatch = topMatches[0]
+    let recommendation: ProblemAnalysisResult["recommendation"]
+
+    if (bestMatch && bestMatch.similarityScore >= 75) {
+      recommendation = {
+        action: "co_report",
+        title: "Existing problem recommended",
+        explanation: `We found existing problems that closely describe this issue ("${bestMatch.problem.title}" with ${bestMatch.similarityScore}% AI similarity). Adding your observational report to this existing challenge consolidates community validation (+1 report) instead of creating a duplicate.`,
+        recommendedProblemId: bestMatch.problem.id,
+        recommendedProblemTitle: bestMatch.problem.title,
+      }
+    } else {
+      recommendation = {
+        action: "new_problem",
+        title: "No strong duplicate found — continue with new problem",
+        explanation: "No strong matching duplicate challenge was detected in the registry. Proceed with registering this as a new societal challenge.",
+      }
+    }
+
+    // Extracted clean keywords (top 5-6)
+    const keywords = combinedKeywords.slice(0, 6)
+
+    return {
+      suggestedDomain: topDomain,
+      domainConfidence,
+      priority,
+      severity,
+      severityReason,
+      keywords,
+      similarProblems: topMatches,
+      recommendation,
+      analyzedAt: new Date().toISOString(),
+    }
   }
 
   /**

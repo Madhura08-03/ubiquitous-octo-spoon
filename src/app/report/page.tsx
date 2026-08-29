@@ -17,11 +17,7 @@ import {
   AlertCircle,
   Clock,
   AlertTriangle,
-  Lightbulb,
-  ExternalLink,
   ShieldCheck,
-  Search,
-  Check,
   Camera,
 } from "lucide-react"
 import { toast } from "sonner"
@@ -39,10 +35,12 @@ import {
   ProblemPriority,
   Problem,
   EvidenceMetadata,
+  ProblemAnalysisResult,
 } from "@/services/problems/problem-types"
 import { problemService } from "@/services/problems/problem-service"
 import { authService } from "@/services/auth/auth-service"
 import { LiveEvidenceCapture } from "@/features/problems/components/live-evidence-capture"
+import { AiProblemAnalyzer } from "@/features/problems/components/ai-problem-analyzer"
 
 const DOMAIN_OPTIONS: ProblemDomain[] = [
   "Water Management",
@@ -60,23 +58,6 @@ const DOMAIN_OPTIONS: ProblemDomain[] = [
   "Social Development",
   "Other",
 ]
-
-const DOMAIN_KEYWORDS: Record<ProblemDomain, string[]> = {
-  "Water Management": ["water", "borewell", "handpump", "arsenic", "fluoride", "drinking", "contamination", "leakage", "aquifer", "drought", "pipeline", "dam", "well", "pond"],
-  "Energy": ["solar", "electricity", "power", "grid", "outage", "voltage", "transformer", "load", "battery", "generator", "transmission"],
-  "Agriculture": ["crop", "irrigation", "farming", "soil", "harvest", "mahua", "lac", "pest", "farmer", "fertilizer", "paddy", "seed", "agriculture"],
-  "Healthcare": ["health", "hospital", "doctor", "clinic", "medicine", "malnutrition", "anemia", "maternal", "ambulance", "phc", "chc", "nurse", "fever", "disease"],
-  "Sanitation": ["garbage", "drainage", "sewage", "trash", "waste", "toilet", "sanitation", "pollution", "dumping", "plastic", "cleanliness"],
-  "Environment": ["forest", "tree", "mining", "dust", "smoke", "wildlife", "elephant", "environment", "climate", "pollution", "air", "erosion"],
-  "Education": ["school", "college", "student", "teacher", "classroom", "books", "education", "lab", "dropout", "literacy", "midday"],
-  "Urban Development": ["road", "bridge", "street", "traffic", "transport", "pothole", "urban", "housing", "lighting", "sidewalk", "encroachment"],
-  "Accessibility": ["disabled", "ramp", "wheelchair", "blind", "accessible", "accessibility", "divyang", "braille", "hearing"],
-  "Public Administration": ["panchayat", "block", "scheme", "aadhaar", "ration", "pension", "administrative", "certificate", "bpl", "portal"],
-  "Rural Livelihoods": ["handicraft", "artisan", "weaving", "tussar", "silk", "livelihood", "tribal craft", "income", "cottage", "bamboo"],
-  "Disaster Management": ["flood", "cyclone", "drought", "landslide", "lightning", "disaster", "fire", "emergency", "monsoon"],
-  "Social Development": ["women", "child", "elderly", "shg", "community", "social", "tribal", "welfare", "inclusion"],
-  "Other": [],
-}
 
 export default function ProblemReportingPage() {
   const router = useRouter()
@@ -105,10 +86,10 @@ export default function ProblemReportingPage() {
   const [gpsDetected, setGpsDetected] = React.useState<string | null>(null)
   const [isDetectingGps, setIsDetectingGps] = React.useState(false)
 
-  // Similar problems discovery
-  const [similarProblems, setSimilarProblems] = React.useState<Problem[]>([])
-  const [isSearchingSimilar, setIsSearchingSimilar] = React.useState(false)
-  const [dismissedSimilar, setDismissedSimilar] = React.useState(false)
+  // AI Problem Analysis State
+  const [aiAnalysis, setAiAnalysis] = React.useState<ProblemAnalysisResult | null>(null)
+  const [isAiAnalyzing, setIsAiAnalyzing] = React.useState(false)
+  const [aiAnalysisError, setAiAnalysisError] = React.useState<string | null>(null)
 
   // State controls
   const [errors, setErrors] = React.useState<Record<string, string>>({})
@@ -128,44 +109,57 @@ export default function ProblemReportingPage() {
     }
   }, [router])
 
-  // Real-time Domain Suggestion Heuristic
-  const suggestedDomain = React.useMemo<ProblemDomain | null>(() => {
-    const combinedText = `${title} ${description}`.toLowerCase()
-    if (combinedText.trim().length < 5) return null
-
-    for (const [candidateDomain, keywords] of Object.entries(DOMAIN_KEYWORDS) as [ProblemDomain, string[]][]) {
-      if (candidateDomain === "Other") continue
-      if (keywords.some((kw) => combinedText.includes(kw))) {
-        return candidateDomain
-      }
-    }
-    return null
-  }, [title, description])
-
-  // Live Similar-Problem Search (Debounced)
+  // Debounced AI Problem Analysis
   React.useEffect(() => {
-    if (reportMode === "co_report" || dismissedSimilar) return
+    if (reportMode === "co_report") return
 
     const timer = setTimeout(async () => {
       const queryLength = (title.trim() + " " + description.trim()).length
-      if (queryLength < 6) {
-        setSimilarProblems([])
+      if (queryLength < 12) {
+        setAiAnalysis(null)
         return
       }
 
-      setIsSearchingSimilar(true)
+      setIsAiAnalyzing(true)
+      setAiAnalysisError(null)
       try {
-        const matches = await problemService.findSimilarProblems(title, description, domain, district)
-        setSimilarProblems(matches)
+        const result = await problemService.analyzeProblem(title, description, domain, district)
+        setAiAnalysis(result)
       } catch (err) {
-        console.error("Error searching similar problems", err)
+        console.error("Error during AI analysis", err)
       } finally {
-        setIsSearchingSimilar(false)
+        setIsAiAnalyzing(false)
       }
-    }, 250)
+    }, 400)
 
     return () => clearTimeout(timer)
-  }, [title, description, domain, district, reportMode, dismissedSimilar])
+  }, [title, description, domain, district, reportMode])
+
+  // Explicit Manual AI Analysis Trigger
+  const handleExplicitAiAnalysis = React.useCallback(async () => {
+    const combinedLength = (title.trim() + " " + description.trim()).length
+    if (combinedLength < 8) {
+      toast.info("More details needed", {
+        description: "Please enter a problem title and brief description to trigger AI analysis.",
+      })
+      return
+    }
+
+    setIsAiAnalyzing(true)
+    setAiAnalysisError(null)
+    try {
+      const result = await problemService.analyzeProblem(title, description, domain, district)
+      setAiAnalysis(result)
+      toast.success("AI Analysis Complete", {
+        description: "Suggested domain: " + result.suggestedDomain + " (" + result.domainConfidence + "% confidence)",
+      })
+    } catch (err) {
+      console.error("AI Analysis error", err)
+      setAiAnalysisError("Unable to analyze problem statement at this time. Please try again.")
+    } finally {
+      setIsAiAnalyzing(false)
+    }
+  }, [title, description, domain, district])
 
   const handleDetectGps = () => {
     setIsDetectingGps(true)
@@ -176,33 +170,33 @@ export default function ProblemReportingPage() {
         (position) => {
           const lat = position.coords.latitude.toFixed(4)
           const lng = position.coords.longitude.toFixed(4)
-          const gpsString = `GPS: Lat ${lat}° N, Lng ${lng}° E`
+          const gpsString = "GPS: Lat " + lat + "° N, Lng " + lng + "° E"
           setGpsDetected(gpsString)
           if (reportMode === "co_report") {
             if (!coReportLocation && selectedExistingProblem) {
-              setCoReportLocation(`${selectedExistingProblem.location}, ${selectedExistingProblem.district}`)
+              setCoReportLocation(selectedExistingProblem.location + ", " + selectedExistingProblem.district)
             }
           } else {
             if (!location) {
-              setLocation(`${district} District Center`)
+              setLocation(district + " District Center")
             }
           }
           setIsDetectingGps(false)
           toast.success("GPS Location Acquired", {
-            description: `${lat}° N, ${lng}° E`,
+            description: lat + "° N, " + lng + "° E",
           })
         },
         () => {
           const fallbackLat = (23.3441 + (Math.random() - 0.5) * 0.05).toFixed(4)
           const fallbackLng = (85.3096 + (Math.random() - 0.5) * 0.05).toFixed(4)
-          setGpsDetected(`GPS (Estimated): Lat ${fallbackLat}° N, Lng ${fallbackLng}° E`)
+          setGpsDetected("GPS (Estimated): Lat " + fallbackLat + "° N, Lng " + fallbackLng + "° E")
           if (reportMode === "co_report") {
             if (!coReportLocation && selectedExistingProblem) {
               setCoReportLocation(selectedExistingProblem.location)
             }
           } else {
             if (!location) {
-              setLocation(`${district} District`)
+              setLocation(district + " District")
             }
           }
           setIsDetectingGps(false)
@@ -213,7 +207,7 @@ export default function ProblemReportingPage() {
         { timeout: 6000 }
       )
     } else {
-      setGpsDetected(`GPS: Lat 23.3441° N, 85.3096° E (${district})`)
+      setGpsDetected("GPS: Lat 23.3441° N, 85.3096° E (" + district + ")")
       setIsDetectingGps(false)
     }
   }
@@ -226,7 +220,7 @@ export default function ProblemReportingPage() {
     setErrors({})
     window.scrollTo({ top: 120, behavior: "smooth" })
     toast.info("Switched to Community Co-Report", {
-      description: `You are reporting: "${prob.title}". Your submission will validate this existing challenge.`,
+      description: "You are reporting: \"" + prob.title + "\". Your submission will validate this existing challenge.",
     })
   }
 
@@ -234,7 +228,6 @@ export default function ProblemReportingPage() {
   const handleSwitchToNewProblem = () => {
     setReportMode("new")
     setSelectedExistingProblem(null)
-    setDismissedSimilar(true)
     setErrors({})
   }
 
@@ -300,7 +293,7 @@ export default function ProblemReportingPage() {
         })
         setSubmittedCoReportProblem(updated)
         toast.success("Community Co-Report Recorded!", {
-          description: `Report count for "${updated.title}" is now ${updated.reportCount}.`,
+          description: "Report count for \"" + updated.title + "\" is now " + updated.reportCount + ".",
         })
       } else {
         // Submit Flow A: Create new problem
@@ -309,7 +302,7 @@ export default function ProblemReportingPage() {
           description: description.trim(),
           domain,
           district,
-          location: location.trim() || `${district} District`,
+          location: location.trim() || (district + " District"),
           priority,
           duration,
           peopleAffected,
@@ -318,7 +311,7 @@ export default function ProblemReportingPage() {
         })
         setSubmittedNewProblem(created)
         toast.success("Societal Challenge Registered!", {
-          description: `Your problem has been registered with ID: ${created.id}.`,
+          description: "Your problem has been registered with ID: " + created.id + ".",
         })
       }
     } catch (err) {
@@ -400,7 +393,7 @@ export default function ProblemReportingPage() {
 
             <div className="flex flex-wrap items-center justify-center gap-3 pt-2">
               <Link
-                href={`/problems/${submittedNewProblem.id}`}
+                href={"/problems/" + submittedNewProblem.id}
                 className={buttonVariants({
                   variant: "default",
                   size: "default",
@@ -463,7 +456,7 @@ export default function ProblemReportingPage() {
 
             <div className="flex flex-wrap items-center justify-center gap-3 pt-2">
               <Link
-                href={`/problems/${submittedCoReportProblem.id}`}
+                href={"/problems/" + submittedCoReportProblem.id}
                 className={buttonVariants({
                   variant: "default",
                   size: "default",
@@ -658,7 +651,7 @@ export default function ProblemReportingPage() {
               <div className="space-y-2 max-w-2xl">
                 <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-bold bg-primary/10 text-primary border border-primary/20">
                   <Sparkles className="size-3.5" />
-                  <span>Grassroots Problem Submission</span>
+                  <span>Grassroots Problem Submission &bull; Task 9 AI Assisted</span>
                 </div>
 
                 <h1 className="text-2xl sm:text-3xl font-black text-foreground tracking-tight">
@@ -666,7 +659,7 @@ export default function ProblemReportingPage() {
                 </h1>
 
                 <p className="text-xs sm:text-sm text-muted-foreground leading-relaxed">
-                  Document an unaddressed challenge in your village, town, or institution to connect it with multidisciplinary university innovators and CSR sponsors.
+                  Document an unaddressed challenge in your village, town, or institution. Our AI engine analyzes your statement to detect duplicates, suggest domain classifications, and connect with university innovators.
                 </p>
               </div>
             </div>
@@ -674,15 +667,29 @@ export default function ProblemReportingPage() {
             <form onSubmit={handleFormSubmitAttempt} className="rounded-2xl border border-border bg-card p-6 sm:p-8 space-y-6 shadow-xs">
               {/* 1. Problem Title */}
               <div className="space-y-2">
-                <label className="text-xs sm:text-sm font-bold text-foreground flex items-center gap-1.5">
-                  <FileQuestion className="size-4 text-primary" />
-                  <span>Problem Title / Statement *</span>
-                </label>
+                <div className="flex items-center justify-between">
+                  <label className="text-xs sm:text-sm font-bold text-foreground flex items-center gap-1.5">
+                    <FileQuestion className="size-4 text-primary" />
+                    <span>Problem Title / Statement *</span>
+                  </label>
+
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    onClick={handleExplicitAiAnalysis}
+                    disabled={isAiAnalyzing || (title.trim().length < 5 && description.trim().length < 10)}
+                    className="text-[11px] h-7 px-2 font-bold text-primary hover:bg-primary/10 gap-1"
+                  >
+                    <Sparkles className="size-3 text-primary" />
+                    <span>Analyze with AI</span>
+                  </Button>
+                </div>
+
                 <Input
                   value={title}
                   onChange={(e) => {
                     setTitle(e.target.value)
-                    setDismissedSimilar(false)
                     if (errors.title) setErrors((prev) => ({ ...prev, title: "" }))
                   }}
                   placeholder="e.g. Dirty drinking water and pipeline leakage in Ormanjhi village"
@@ -706,34 +713,12 @@ export default function ProblemReportingPage() {
                   value={description}
                   onChange={(e) => {
                     setDescription(e.target.value)
-                    setDismissedSimilar(false)
                     if (errors.description) setErrors((prev) => ({ ...prev, description: "" }))
                   }}
                   placeholder="Describe the specific societal bottleneck, observed symptoms, affected community members, and how long it has persisted..."
                   rows={4}
                   className="text-xs sm:text-sm bg-background leading-relaxed"
                 />
-
-                {/* Real-time Domain Suggestion Banner */}
-                {suggestedDomain && suggestedDomain !== domain && (
-                  <div className="flex items-center justify-between p-2.5 rounded-xl border border-primary/30 bg-primary/5 text-xs text-foreground">
-                    <div className="flex items-center gap-2">
-                      <Lightbulb className="size-4 text-amber-500 shrink-0" />
-                      <span>
-                        Suggested Sector Domain: <strong>{suggestedDomain}</strong>
-                      </span>
-                    </div>
-                    <Button
-                      type="button"
-                      variant="outline"
-                      size="sm"
-                      onClick={() => setDomain(suggestedDomain)}
-                      className="text-[11px] h-7 px-2.5 font-bold border-primary/40 text-primary hover:bg-primary/10"
-                    >
-                      Apply Suggestion
-                    </Button>
-                  </div>
-                )}
 
                 {errors.description && (
                   <p className="text-[11px] font-medium text-destructive flex items-center gap-1">
@@ -744,110 +729,33 @@ export default function ProblemReportingPage() {
               </div>
 
               {/* ========================================================================= */}
-              {/* LIVE SIMILAR-PROBLEM DISCOVERY CARD LIST */}
+              {/* TASK 9: AI PROBLEM ANALYSIS & DUPLICATE DETECTION CARD */}
               {/* ========================================================================= */}
-              {similarProblems.length > 0 && !dismissedSimilar && (
-                <div className="p-4 sm:p-5 rounded-2xl border-2 border-amber-500/40 bg-amber-500/5 space-y-3.5 text-left transition-all">
-                  <div className="flex items-start justify-between gap-3">
-                    <div className="space-y-1">
-                      <div className="flex items-center gap-2 font-bold text-sm text-foreground">
-                        <Search className="size-4 text-amber-600 dark:text-amber-400" />
-                        <span>Similar existing problems found</span>
-                        {isSearchingSimilar && <Loader2 className="size-3 animate-spin text-muted-foreground" />}
-                      </div>
-                      <p className="text-xs text-muted-foreground leading-relaxed">
-                        We found existing problems matching your keywords. Reporting on an existing problem validates community urgency (+1 report) instead of creating a duplicate.
-                      </p>
-                    </div>
-
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => setDismissedSimilar(true)}
-                      className="text-[11px] h-7 text-muted-foreground hover:text-foreground shrink-0"
-                    >
-                      Dismiss Matches
-                    </Button>
-                  </div>
-
-                  <div className="space-y-2.5">
-                    {similarProblems.map((prob) => (
-                      <div
-                        key={prob.id}
-                        className="rounded-xl border border-border bg-card p-3.5 space-y-2.5 shadow-2xs hover:border-primary/40 transition-all"
-                      >
-                        <div className="flex items-start justify-between gap-2">
-                          <div className="space-y-0.5">
-                            <p className="text-xs sm:text-sm font-bold text-foreground">{prob.title}</p>
-                            <p className="text-[11px] text-muted-foreground flex items-center gap-1">
-                              <MapPin className="size-3 text-primary shrink-0" />
-                              <span>{prob.location}, {prob.district}</span>
-                            </p>
-                          </div>
-
-                          <div className="flex items-center gap-1.5 shrink-0">
-                            <Badge variant="outline" className="text-[10px] border-primary/30 text-primary">
-                              {prob.domain}
-                            </Badge>
-                            <Badge
-                              variant="outline"
-                              className={
-                                prob.priority === "critical"
-                                  ? "text-[10px] border-rose-500/30 text-rose-600 bg-rose-500/10 font-bold"
-                                  : "text-[10px] border-border text-muted-foreground"
-                              }
-                            >
-                              {prob.reportCount} reports
-                            </Badge>
-                          </div>
-                        </div>
-
-                        <div className="flex flex-wrap items-center justify-end gap-2 pt-1 border-t border-border/60">
-                          <Link
-                            href={`/problems/${prob.id}`}
-                            target="_blank"
-                            className={buttonVariants({
-                              variant: "ghost",
-                              size: "sm",
-                              className: "text-[11px] h-7 px-2.5 text-muted-foreground hover:text-foreground gap-1",
-                            })}
-                          >
-                            <span>View Problem</span>
-                            <ExternalLink className="size-3" />
-                          </Link>
-
-                          <Button
-                            type="button"
-                            variant="default"
-                            size="sm"
-                            onClick={() => handleSelectExistingProblemToReport(prob)}
-                            className="text-[11px] h-7 px-3 font-bold bg-amber-500 text-slate-950 hover:bg-amber-400 gap-1 shadow-2xs"
-                          >
-                            <Check className="size-3" />
-                            <span>Report This Problem</span>
-                          </Button>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-
-                  <div className="pt-1 text-center">
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => setDismissedSimilar(true)}
-                      className="text-xs font-semibold text-primary hover:text-primary/80"
-                    >
-                      None of these match &rarr; Continue Creating New Problem
-                    </Button>
-                  </div>
-                </div>
-              )}
+              <AiProblemAnalyzer
+                analysis={aiAnalysis}
+                isAnalyzing={isAiAnalyzing}
+                analysisError={aiAnalysisError}
+                onTriggerAnalysis={handleExplicitAiAnalysis}
+                onApplyDomain={(d) => {
+                  setDomain(d)
+                  toast.success("Applied Domain", { description: "Sector domain set to " + d })
+                }}
+                onApplyPriority={(p) => {
+                  setPriority(p)
+                  toast.success("Applied Priority", { description: "Priority set to " + p })
+                }}
+                onSelectExistingProblem={handleSelectExistingProblemToReport}
+                onContinueAsNew={() => {
+                  toast.info("Continuing with New Challenge", {
+                    description: "You can proceed filling out location and evidence details below.",
+                  })
+                }}
+                currentDomain={domain}
+                canAnalyze={Boolean(title.trim().length >= 5 || description.trim().length >= 10)}
+              />
 
               {/* 3. Domain & District Selection */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2 border-t border-border">
                 <div className="space-y-1.5">
                   <label className="text-xs font-bold text-foreground">
                     Sector Domain *
@@ -1045,7 +953,7 @@ export default function ProblemReportingPage() {
         }
         description={
           reportMode === "co_report"
-            ? `You are submitting observational evidence to validate "${selectedExistingProblem?.title}". This will increase the community report count for this existing problem.`
+            ? "You are submitting observational evidence to validate \"" + (selectedExistingProblem?.title || "selected problem") + "\". This will increase the community report count for this existing problem."
             : "You are registering a brand new societal challenge in the Government of Jharkhand public innovation registry. This challenge will become accessible to university innovators and district nodal officers."
         }
         confirmLabel={reportMode === "co_report" ? "Confirm & Submit Co-Report" : "Confirm & Register Problem"}
@@ -1057,5 +965,5 @@ export default function ProblemReportingPage() {
 
       <PublicFooter />
     </div>
-  )
+)
 }

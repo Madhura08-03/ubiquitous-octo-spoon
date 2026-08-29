@@ -182,3 +182,27 @@ export interface CreateProblemPayload {
   mediaType?: "image" | "video"
   mediaCaption?: string
 }
+
+export interface SimilarProblemMatch {
+  problem: Problem
+  similarityScore: number
+  matchReasons: string[]
+}
+
+export interface ProblemAnalysisResult {
+  suggestedDomain: ProblemDomain
+  domainConfidence: number
+  priority: ProblemPriority
+  severity: "low" | "medium" | "high" | "critical"
+  severityReason: string
+  keywords: string[]
+  similarProblems: SimilarProblemMatch[]
+  recommendation: {
+    action: "co_report" | "new_problem"
+    title: string
+    explanation: string
+    recommendedProblemId?: string
+    recommendedProblemTitle?: string
+  }
+  analyzedAt: string
+}
