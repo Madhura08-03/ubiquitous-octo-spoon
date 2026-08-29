@@ -19,7 +19,7 @@ export function QuickActionsBar() {
       </span>
 
       <Link
-        href="/feed"
+        href="/university/problems"
         className={buttonVariants({
           variant: "default",
           size: "sm",

@@ -134,3 +134,78 @@ export interface UniversityDashboardData {
   recentActivity: TimelineItem[]
   impact: UniversityImpactSummary
 }
+
+// ==========================================
+// TASK 12: PROBLEM MANAGEMENT INTERFACES
+// ==========================================
+
+export type UniversityProblemStatus =
+  | "assigned"
+  | "recommended"
+  | "under_review"
+  | "accepted"
+  | "rejected"
+
+export interface UniversityMatchBreakdown {
+  overallMatch: number
+  researchExpertise: number
+  labCapability: number
+  facultyAvailability: number
+  studentSkills: number
+  criteria: string[]
+  recommendationReason: string
+}
+
+export interface UniversityInformationRequest {
+  id: string
+  query: string
+  requestedAt: string
+  status: "pending" | "responded"
+  response?: string
+}
+
+export interface UniversityProblemRecord {
+  id: string
+  problemId: string
+  title: string
+  description: string
+  district: string
+  locality: string
+  domain: ProblemDomain
+  priority: ProblemPriority
+  severity: "critical" | "high" | "medium" | "low"
+  status: UniversityProblemStatus
+  lifecycleStage: ProblemLifecycleStage
+  communityReports: number
+  duration: string
+  durationMonths: number
+  affectedPopulation: string
+  aiMatch: UniversityMatchBreakdown
+  mediaUrl?: string
+  mediaType?: "image" | "video"
+  latitude?: number
+  longitude?: number
+  assignedDepartment?: string
+  assignedMentor?: string
+  activeTeamSize?: number
+  rejectionReason?: string
+  informationRequests?: UniversityInformationRequest[]
+  createdAt: string
+  acceptedAt?: string
+}
+
+export interface UniversityProblemManagementStats {
+  assigned: number
+  recommended: number
+  underReview: number
+  accepted: number
+}
+
+export interface UniversityProblemFilters {
+  search?: string
+  status?: string
+  domain?: string
+  priority?: string
+  district?: string
+  sortBy?: "match" | "priority" | "reports" | "recent"
+}

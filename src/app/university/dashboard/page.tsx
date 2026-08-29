@@ -47,9 +47,9 @@ const UNIVERSITY_SIDEBAR_SECTIONS: SidebarSection[] = [
     title: "University Portal",
     items: [
       { id: "overview", label: "Dashboard Overview", href: "/university/dashboard", icon: LayoutDashboard, active: true },
-      { id: "problems", label: "Assigned Problems", href: "#problems", icon: FileQuestion, badge: "4" },
-      { id: "recommendations", label: "Recommendations", href: "#recommendations", icon: Sparkles, badge: "3" },
-      { id: "projects", label: "Active Capstones", href: "#active-projects", icon: Lightbulb, badge: "4" },
+      { id: "problems", label: "Problem Management", href: "/university/problems", icon: FileQuestion, badge: "12" },
+      { id: "recommendations", label: "Recommendations", href: "#recommendations", icon: Sparkles, badge: "8" },
+      { id: "projects", label: "Active Capstones", href: "#active-projects", icon: Lightbulb, badge: "6" },
     ],
   },
   {
