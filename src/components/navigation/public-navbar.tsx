@@ -3,7 +3,7 @@
 import * as React from "react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
-import { Shield, Search, Menu, User, Sparkles, LogOut, Activity, GraduationCap, FolderGit2 } from "lucide-react"
+import { Shield, Search, Menu, User, Sparkles, LogOut, Activity, GraduationCap, FolderGit2, Building2 } from "lucide-react"
 
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
@@ -159,6 +159,17 @@ export function PublicNavbar({
                   </Link>
                 )}
 
+                {authUser.role === "industry" && (
+                  <Link
+                    href="/industry/dashboard"
+                    className="inline-flex items-center gap-1.5 text-xs font-bold text-primary hover:text-primary/80 py-1 px-2.5 rounded-lg bg-primary/10 border border-primary/20"
+                    title="CSR & Industry Hub"
+                  >
+                    <Building2 className="size-3.5 text-primary" />
+                    <span className="hidden md:inline">CSR Hub</span>
+                  </Link>
+                )}
+
                 <Link
                   href="/onboarding"
                   className="inline-flex items-center gap-1.5 text-xs font-semibold text-muted-foreground hover:text-foreground py-1 px-2 rounded-lg hover:bg-muted"
@@ -284,6 +295,16 @@ export function PublicNavbar({
                         >
                           <FolderGit2 className="size-4 text-primary" />
                           <span>My Innovation Projects</span>
+                        </Link>
+                      )}
+                      {authUser.role === "industry" && (
+                        <Link
+                          href="/industry/dashboard"
+                          onClick={() => setIsOpen(false)}
+                          className="text-sm font-bold text-primary hover:text-primary/80 py-1.5 transition-colors flex items-center gap-2"
+                        >
+                          <Building2 className="size-4 text-primary" />
+                          <span>CSR & Industry Hub</span>
                         </Link>
                       )}
                       <Link
