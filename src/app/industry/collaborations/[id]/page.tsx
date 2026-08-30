@@ -5,175 +5,199 @@ import Link from "next/link"
 import { useParams, useRouter } from "next/navigation"
 import {
   ArrowLeft,
-  Building,
 } from "lucide-react"
 
-import { Button } from "@/components/ui/button"
+import { PublicNavbar } from "@/components/navigation/public-navbar"
+import { PublicFooter } from "@/components/navigation/public-footer"
+import { Breadcrumbs } from "@/components/ui/breadcrumbs"
 import { Badge } from "@/components/ui/badge"
 import { authService } from "@/services/auth/auth-service"
-import { industryService } from "@/services/industry/industry-service"
-import { CSRCollaboration } from "@/services/industry/industry-types"
+import { industryCollaborationService } from "@/services/industry/industry-collaboration-service"
+import { IndustryCollaboration } from "@/services/industry/industry-collaboration-types"
+import { ImplementationLifecycle } from "@/features/government/components/implementation-lifecycle"
+import { ImplementationStage } from "@/services/implementation/implementation-types"
 
 export default function IndustryCollaborationDetailPage() {
   const params = useParams()
   const router = useRouter()
   const rawId = Array.isArray(params?.id) ? params.id[0] : params?.id
-  const currentUser = authService.getCurrentUser()
 
-  const [collaboration, setCollaboration] = React.useState<CSRCollaboration | null>(null)
+  const [collab, setCollab] = React.useState<IndustryCollaboration | null>(null)
   const [isLoading, setIsLoading] = React.useState(true)
-
-  const loadData = React.useCallback(async () => {
-    if (!rawId) return
-    try {
-      const found = await industryService.getCollaborationById(rawId)
-      setCollaboration(found)
-    } finally {
-      setIsLoading(false)
-    }
-  }, [rawId])
 
   React.useEffect(() => {
     const user = authService.getCurrentUser()
-    if (!user || user.role !== "industry") {
+    if (!user) {
       router.replace("/login")
       return
     }
-
-    loadData()
-  }, [router, loadData])
-
-  if (!currentUser || currentUser.role !== "industry") return null
+    if (!rawId) return
+    industryCollaborationService.getCollaborationById(rawId).then((res) => {
+      setCollab(res)
+      setIsLoading(false)
+    })
+  }, [router, rawId])
 
   if (isLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center p-6 text-xs text-muted-foreground">
-        Loading Collaboration Oversight...
+        Loading Collaboration Workspace...
       </div>
     )
   }
 
-  if (!collaboration) {
+  if (!collab) {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center p-6 text-center space-y-4">
-        <h2 className="text-lg font-bold text-foreground">Collaboration record not found</h2>
-        <Link href="/industry/collaborations">
-          <Button size="sm" variant="outline" className="text-xs">
-            Back to Collaborations
-          </Button>
+        <h2 className="text-lg font-bold text-foreground">Collaboration Not Found</h2>
+        <Link
+          href="/industry/collaborations"
+          className="inline-flex items-center justify-center rounded-lg bg-primary text-primary-foreground text-xs font-bold px-4 py-2 hover:bg-primary/90"
+        >
+          Return to Collaborations
         </Link>
       </div>
     )
   }
 
   return (
-    <div className="min-h-screen bg-background font-sans text-foreground flex flex-col text-left">
-      <header className="border-b border-border bg-card/60 backdrop-blur-sm sticky top-0 z-20 px-4 sm:px-6 lg:px-8 py-3 flex items-center justify-between gap-4">
-        <div className="flex items-center gap-3">
-          <Link
-            href="/industry/collaborations"
-            className="text-xs text-muted-foreground hover:text-foreground inline-flex items-center gap-1 font-semibold"
-          >
-            <ArrowLeft className="size-3.5" />
-            <span>Collaborations</span>
-          </Link>
-          <span className="text-muted-foreground">&bull;</span>
-          <span className="text-xs font-mono font-bold text-primary">
-            ID: {collaboration.id}
-          </span>
-        </div>
-      </header>
+    <div className="flex min-h-screen flex-col bg-background font-sans text-foreground">
+      <PublicNavbar />
 
-      <main className="flex-1 p-4 sm:p-6 lg:p-8 space-y-8 max-w-7xl w-full mx-auto">
-        {/* Banner */}
-        <div className="p-6 rounded-2xl border border-border bg-card space-y-4 shadow-xs">
-          <div className="flex flex-wrap items-center justify-between gap-2">
-            <Badge variant="outline" className="border-emerald-500 text-emerald-800 dark:text-emerald-300 font-mono text-[9px]">
-              ACTIVE CSR SPONSORSHIP
-            </Badge>
+      <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6 text-left">
+        <Breadcrumbs
+          items={[
+            { label: "Home", href: "/" },
+            { label: "Industry Portal", href: "/industry/dashboard" },
+            { label: "Collaborations", href: "/industry/collaborations" },
+            { label: collab.title },
+          ]}
+        />
 
-            <span className="text-xs font-mono font-bold text-primary">
-              {collaboration.progress}% Completed
+        {/* Header Banner */}
+        <div className="rounded-3xl border border-border bg-card p-6 sm:p-8 space-y-5 shadow-xs text-left">
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <Link
+              href="/industry/collaborations"
+              className="inline-flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground font-semibold"
+            >
+              <ArrowLeft className="size-3.5" />
+              <span>Back to Collaborations</span>
+            </Link>
+
+            <div className="flex flex-wrap items-center gap-2">
+              <Badge className="bg-emerald-600 text-white text-[10px] font-bold">
+                ✓ ACTIVE CSR PARTNERSHIP
+              </Badge>
+              <Badge variant="outline" className="text-[10px] font-mono">
+                Stage: {collab.currentStage}
+              </Badge>
+            </div>
+          </div>
+
+          <div className="space-y-1">
+            <span className="text-xs text-muted-foreground uppercase font-bold block">
+              Problem: {collab.problemTitle}
+            </span>
+            <h1 className="text-xl sm:text-2xl font-black text-foreground">{collab.title}</h1>
+            <span className="text-sm font-semibold text-primary block">
+              University Partner: {collab.universityName}
             </span>
           </div>
 
-          <div className="space-y-1">
-            <p className="font-bold text-primary text-xs flex items-center gap-1.5">
-              <Building className="size-3.5" />
-              <span>{collaboration.universityName}</span>
-            </p>
-            <h1 className="text-xl sm:text-2xl font-extrabold text-foreground">
-              {collaboration.solutionTitle}
-            </h1>
-            <p className="text-xs text-muted-foreground">
-              Challenge: <strong>{collaboration.problemTitle}</strong>
-            </p>
-          </div>
-
-          {/* Progress Bar */}
-          <div className="space-y-1">
-            <div className="w-full h-2 rounded-full bg-muted overflow-hidden">
-              <div
-                className="h-full bg-primary rounded-full transition-all"
-                style={{ width: `${collaboration.progress}%` }}
-              />
+          {/* Quick Metrics */}
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 pt-3 border-t border-border/40 text-xs">
+            <div>
+              <span className="text-[10px] text-muted-foreground uppercase font-bold block">Support Type</span>
+              <p className="font-bold text-foreground">{collab.collaborationType}</p>
             </div>
-          </div>
-
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 pt-2 text-xs border-t border-border">
-            <div className="p-3 rounded-xl border border-border bg-muted/20 space-y-0.5">
-              <span className="text-[10px] text-muted-foreground uppercase font-semibold">CSR Grant</span>
-              <p className="font-bold text-foreground font-mono">{collaboration.csrContribution}</p>
+            <div>
+              <span className="text-[10px] text-muted-foreground uppercase font-bold block">Sanctioned Grant</span>
+              <p className="font-bold text-foreground font-mono">₹{(collab.fundingAmount / 100000).toFixed(1)} Lakhs</p>
             </div>
-            <div className="p-3 rounded-xl border border-border bg-muted/20 space-y-0.5">
-              <span className="text-[10px] text-muted-foreground uppercase font-semibold">Faculty Lead</span>
-              <p className="font-bold text-foreground truncate">{collaboration.facultyMentorName}</p>
+            <div>
+              <span className="text-[10px] text-muted-foreground uppercase font-bold block">Target Completion</span>
+              <p className="font-bold text-primary font-mono">{new Date(collab.targetEndDate).toLocaleDateString()}</p>
             </div>
-            <div className="p-3 rounded-xl border border-border bg-muted/20 space-y-0.5">
-              <span className="text-[10px] text-muted-foreground uppercase font-semibold">Beneficiaries</span>
-              <p className="font-bold text-foreground font-mono">{collaboration.reachedCitizens.toLocaleString()}</p>
-            </div>
-            <div className="p-3 rounded-xl border border-border bg-muted/20 space-y-0.5">
-              <span className="text-[10px] text-muted-foreground uppercase font-semibold">Villages</span>
-              <p className="font-bold text-foreground font-mono">{collaboration.villagesCovered} Panchayats</p>
+            <div>
+              <span className="text-[10px] text-muted-foreground uppercase font-bold block">Implementation Progress</span>
+              <div className="flex items-center gap-2">
+                <span className="font-mono font-extrabold text-foreground">{collab.progressPercentage}%</span>
+                <div className="flex-1 h-2 rounded-full bg-muted overflow-hidden">
+                  <div className="h-full bg-primary" style={{ width: `${collab.progressPercentage}%` }} />
+                </div>
+              </div>
             </div>
           </div>
         </div>
 
-        {/* Milestones High-Level Overview */}
-        <div className="p-6 rounded-2xl border border-border bg-card space-y-4 shadow-xs">
-          <h3 className="text-sm font-extrabold text-foreground border-b border-border pb-3">
-            Grant Milestones & Implementation Progress
-          </h3>
+        {/* Task 22 Implementation Lifecycle Visualizer */}
+        <ImplementationLifecycle currentStage={collab.currentStage.toLowerCase() as ImplementationStage} />
 
-          <div className="divide-y divide-border/60 text-xs">
-            {collaboration.milestonesSummary.map((m, idx) => (
-              <div key={idx} className="py-3 flex items-center justify-between gap-3">
-                <div className="space-y-0.5">
-                  <h4 className="font-bold text-foreground">{m.title}</h4>
-                  <p className="text-[11px] text-muted-foreground">Target Date: {m.targetDate}</p>
-                </div>
+        {/* Main Grid: Scope & Milestones */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <div className="p-5 sm:p-6 rounded-2xl border border-border bg-card space-y-4">
+            <h3 className="text-base font-bold text-foreground">Partnership Scope & Objectives</h3>
+            <p className="text-xs text-muted-foreground leading-relaxed">{collab.description}</p>
 
-                <div>
-                  {m.status === "completed" ? (
-                    <Badge variant="outline" className="border-emerald-500/40 text-emerald-800 dark:text-emerald-300 font-mono text-[9px] font-bold bg-emerald-500/10">
-                      COMPLETED
+            <div className="space-y-2 pt-2">
+              <span className="text-xs font-bold text-foreground uppercase tracking-wider block">
+                Joint Deliverables
+              </span>
+              <ul className="space-y-1.5 text-xs text-muted-foreground">
+                {collab.objectives.map((obj, idx) => (
+                  <li key={idx} className="flex items-start gap-2">
+                    <span className="text-primary font-bold">&bull;</span>
+                    <span className="text-foreground">{obj}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+
+            <div className="p-3 rounded-xl bg-muted/40 border border-border/50 text-xs text-muted-foreground space-y-1">
+              <strong className="text-foreground block">Mutual Responsibilities:</strong>
+              <p>{collab.responsibilities}</p>
+            </div>
+          </div>
+
+          <div className="p-5 sm:p-6 rounded-2xl border border-border bg-card space-y-4">
+            <div className="flex items-center justify-between border-b border-border pb-3">
+              <h3 className="text-base font-bold text-foreground">Sanctioned Milestones</h3>
+              <Badge variant="outline" className="text-xs font-mono">{collab.milestones.length} Milestones</Badge>
+            </div>
+
+            <div className="space-y-3">
+              {collab.milestones.map((m) => (
+                <div key={m.id} className="p-3.5 rounded-xl border border-border bg-muted/20 space-y-1.5 text-xs">
+                  <div className="flex items-center justify-between">
+                    <h4 className="font-bold text-foreground">{m.title}</h4>
+                    <Badge
+                      variant="outline"
+                      className={
+                        m.status === "completed"
+                          ? "bg-emerald-600 text-white text-[9px] font-bold"
+                          : m.status === "in_progress"
+                          ? "bg-primary/10 text-primary border-primary/30 text-[9px] font-bold"
+                          : "border-muted text-muted-foreground text-[9px]"
+                      }
+                    >
+                      {m.status.toUpperCase()}
                     </Badge>
-                  ) : m.status === "in_progress" ? (
-                    <Badge variant="outline" className="border-amber-500/40 text-amber-800 dark:text-amber-300 font-mono text-[9px] font-bold bg-amber-500/10">
-                      IN PROGRESS
-                    </Badge>
-                  ) : (
-                    <Badge variant="outline" className="border-border text-muted-foreground font-mono text-[9px]">
-                      PENDING
-                    </Badge>
+                  </div>
+                  {m.deliverablesSummary && (
+                    <p className="text-muted-foreground leading-relaxed">{m.deliverablesSummary}</p>
                   )}
+                  <span className="text-[10px] text-muted-foreground font-mono block">
+                    Planned Target: {new Date(m.plannedDate).toLocaleDateString()}
+                  </span>
                 </div>
-              </div>
-            ))}
+              ))}
+            </div>
           </div>
         </div>
       </main>
+
+      <PublicFooter />
     </div>
   )
 }

@@ -4,6 +4,7 @@ import * as React from "react"
 import Link from "next/link"
 import { useParams, useRouter } from "next/navigation"
 import {
+  Building2,
   FolderGit2,
   Users,
   Layers,
@@ -217,6 +218,11 @@ export default function UniversityProjectWorkspaceDetailPage() {
                 <span>Budget & Risks</span>
               </TabsTrigger>
 
+              <TabsTrigger value="industry" className="text-xs font-bold py-2.5 px-4 gap-1.5">
+                <Building2 className="size-3.5" />
+                <span>Industry CSR</span>
+              </TabsTrigger>
+
               <TabsTrigger value="government" className="text-xs font-bold py-2.5 px-4 gap-1.5">
                 <ShieldCheck className="size-3.5" />
                 <span>Government Reviews</span>
@@ -278,6 +284,53 @@ export default function UniversityProjectWorkspaceDetailPage() {
           <TabsContent value="budget" className="mt-0 space-y-6">
             <ProjectBudgetSection project={project} />
             <ProjectRiskSection project={project} onReload={loadData} />
+          </TabsContent>
+
+                    <TabsContent value="industry" className="mt-0 space-y-6">
+            <div className="p-5 sm:p-6 rounded-2xl border border-border bg-card space-y-5 text-left">
+              <div className="flex flex-wrap items-center justify-between gap-3 border-b border-border pb-3">
+                <div className="flex items-center gap-2">
+                  <Building2 className="size-5 text-primary" />
+                  <div>
+                    <h3 className="text-base font-bold text-foreground">
+                      Corporate CSR Partnership & Industry Sponsorship
+                    </h3>
+                    <p className="text-xs text-muted-foreground">
+                      Authorized institutional collaboration terms and logistics support.
+                    </p>
+                  </div>
+                </div>
+
+                <Badge className="bg-emerald-600 text-white text-[10px] font-bold">
+                  ✓ ACTIVE CSR PARTNERSHIP
+                </Badge>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
+                <div className="p-4 rounded-xl bg-muted/30 border border-border space-y-2">
+                  <span className="text-[10px] uppercase font-bold text-muted-foreground block">Funding Partner</span>
+                  <h4 className="text-base font-bold text-foreground">{project.sponsorName || "Tata Steel CSR Foundation"}</h4>
+                  <p className="text-muted-foreground leading-relaxed">
+                    Committed grant funding for hardware procurement, decentralized field columns, and tribal community water telemetry across Ormanjhi and Angara.
+                  </p>
+                </div>
+
+                <div className="p-4 rounded-xl bg-muted/30 border border-border space-y-3 font-mono">
+                  <div>
+                    <span className="text-[10px] text-muted-foreground uppercase font-bold block font-sans">Grant Commitment</span>
+                    <strong className="text-foreground text-sm">₹{(project.sanctionedBudget / 100000).toFixed(2)} Lakhs</strong>
+                  </div>
+                  <div>
+                    <span className="text-[10px] text-muted-foreground uppercase font-bold block font-sans">Support Scope</span>
+                    <strong className="text-primary font-sans text-xs">CSR Grant + Field Vehicle Logistics + Community Mobilization</strong>
+                  </div>
+                  <div>
+                    <span className="text-[10px] text-muted-foreground uppercase font-bold block font-sans">Official Contact Channel</span>
+                    <strong className="text-foreground text-xs font-sans">csr.jharkhand@tatasteel.com</strong>
+                  </div>
+                </div>
+              </div>
+            </div>
           </TabsContent>
 
           <TabsContent value="government" className="mt-0">
