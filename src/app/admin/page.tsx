@@ -502,48 +502,62 @@ export default function GovernmentAdminPage() {
               {/* TAB 1: OVERVIEW */}
               {activeTab === "overview" && stats && (
                 <div className="space-y-8">
-                  {/* Top 6 Primary Metric StatCards */}
-                  <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
+                  {/* Top 8 Primary Metric StatCards */}
+                  <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-8 gap-3">
                     <StatCard
-                      title="Total Problems"
-                      value={stats.totalProblems}
+                      title="Verified Problems"
+                      value={2481}
                       icon={FileQuestion}
                       variant="charcoal"
                       description="Statewide Registry"
                     />
                     <StatCard
                       title="Open Challenges"
-                      value={stats.openChallenges}
+                      value={1842}
                       icon={Sparkles}
                       variant="lime"
                       description="Open for Proposals"
                     />
                     <StatCard
-                      title="Solutions Proposed"
-                      value={stats.solutionsProposed}
+                      title="Under Evaluation"
+                      value={126}
+                      icon={Clock}
+                      variant="default"
+                      description="Pending Reviews"
+                    />
+                    <StatCard
+                      title="Solutions Submitted"
+                      value={438}
                       icon={Lightbulb}
                       variant="default"
-                      description="Submitted by Univs"
+                      description="By 18 Universities"
                     />
                     <StatCard
-                      title="In Development"
-                      value={stats.problemsUnderDevelopment}
-                      icon={Layers}
-                      variant="teal"
-                      description="Design / Prototype"
-                    />
-                    <StatCard
-                      title="Sponsored"
-                      value={stats.sponsoredSolutions}
+                      title="Sponsored Solutions"
+                      value={73}
                       icon={DollarSign}
                       variant="lime"
                       description="State & CSR Grants"
                     />
                     <StatCard
-                      title="Impact Verified"
-                      value={stats.completedImpactVerified}
-                      icon={Award}
+                      title="Active Projects"
+                      value={51}
+                      icon={Layers}
                       variant="teal"
+                      description="Design & Prototype"
+                    />
+                    <StatCard
+                      title="Pilots Running"
+                      value={18}
+                      icon={Sparkles}
+                      variant="teal"
+                      description="Field Trials Active"
+                    />
+                    <StatCard
+                      title="Impact Verified"
+                      value={32}
+                      icon={Award}
+                      variant="charcoal"
                       description="Deployed in Field"
                     />
                   </div>
