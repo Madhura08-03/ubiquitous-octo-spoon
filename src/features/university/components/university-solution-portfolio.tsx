@@ -229,13 +229,21 @@ export function UniversitySolutionPortfolio({
                     <div className="pt-2 border-t border-border/60 flex flex-wrap items-center justify-between gap-2 text-[11px] text-muted-foreground">
                       <span>Students: <strong>{sol.studentParticipants?.length || sol.studentTeamSize || 4}</strong></span>
                       <span>Mentor: <strong>{sol.teamFacultyLead || "Dr. Rahul Verma"}</strong></span>
-                      <Link
-                        href={`/problems/${sol.problemId}`}
-                        className="text-primary hover:underline font-semibold inline-flex items-center gap-0.5"
-                      >
-                        <span>Track</span>
-                        <ChevronRight className="size-3" />
-                      </Link>
+                      <div className="flex items-center gap-2">
+                        <Link
+                          href={`/problems/${sol.problemId}`}
+                          className="text-muted-foreground hover:underline font-semibold"
+                        >
+                          Problem
+                        </Link>
+                        <Link
+                          href="/university/projects/proj_001"
+                          className="text-primary hover:underline font-bold inline-flex items-center gap-0.5"
+                        >
+                          <span>Workspace</span>
+                          <ChevronRight className="size-3" />
+                        </Link>
+                      </div>
                     </div>
                   </div>
                 )

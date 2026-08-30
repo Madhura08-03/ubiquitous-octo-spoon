@@ -487,13 +487,12 @@ export function StudentProfileView({ profile }: StudentProfileViewProps) {
                           <ExternalLink className="size-3" />
                         </Link>
 
-                        <Button
-                          size="sm"
-                          onClick={() => window.alert("Solution: " + proj.title + "\nStatus: " + proj.status)}
-                          className="text-xs h-8 bg-blue-600 hover:bg-blue-700 text-white font-bold"
+                        <Link
+                          href="/student/projects/proj_001"
+                          className="text-xs h-8 px-3 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-700 text-white font-bold inline-flex items-center"
                         >
-                          <span>Track Project</span>
-                        </Button>
+                          <span>Open Workspace</span>
+                        </Link>
                       </div>
                     </div>
                   </div>

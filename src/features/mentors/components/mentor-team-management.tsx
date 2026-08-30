@@ -1,6 +1,7 @@
 "use client"
 
 import * as React from "react"
+import Link from "next/link"
 import { toast } from "sonner"
 import {
   Users,
@@ -9,6 +10,7 @@ import {
   FileCheck,
   CheckCircle2,
   MessageSquare,
+  ExternalLink,
 } from "lucide-react"
 
 import {
@@ -252,6 +254,20 @@ export function MentorTeamManagementModal({
                           </Button>
                         </div>
                       )}
+
+                      {/* Open Project Workspace */}
+                      <div className="pt-2 border-t border-border flex items-center justify-between text-xs">
+                        <span className="text-[10px] text-muted-foreground">
+                          Assigned: {team.assignedAt}
+                        </span>
+                        <Link
+                          href="/university/projects/proj_001"
+                          className="text-[11px] font-bold text-primary hover:underline inline-flex items-center gap-1"
+                        >
+                          <span>Open Project Workspace</span>
+                          <ExternalLink className="size-2.5" />
+                        </Link>
+                      </div>
                     </div>
                   ))}
                 </div>
