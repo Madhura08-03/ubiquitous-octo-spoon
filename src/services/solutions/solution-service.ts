@@ -7,8 +7,8 @@ import { MOCK_SOLUTION_PROPOSALS } from "@/data/solutions/solution-proposals-dat
 import { authService } from "@/services/auth/auth-service"
 import { problemService } from "@/services/problems/problem-service"
 
-const PROPOSALS_STORAGE_KEY = "jh_solution_proposals_v1"
-const SPONSORSHIP_INTEREST_KEY = "jh_sponsorship_interests_v1"
+const PROPOSALS_STORAGE_KEY = "jh_solution_proposals_v2"
+const SPONSORSHIP_INTEREST_KEY = "jh_sponsorship_interests_v2"
 
 function isClient(): boolean {
   return typeof window !== "undefined"
@@ -94,12 +94,25 @@ export class MockSolutionService {
     )
   }
 
+  async getProposalsByStudent(studentEmailOrId: string): Promise<SolutionProposal[]> {
+    await this.simulateDelay(80)
+    const clean = studentEmailOrId.toLowerCase().trim()
+    const all = this.getStoredProposals()
+    return all.filter((p) =>
+      p.studentParticipants?.some(
+        (sp) =>
+          sp.studentId.toLowerCase() === clean ||
+          sp.studentEmail.toLowerCase().trim() === clean
+      )
+    )
+  }
+
   async createSolutionProposal(payload: CreateSolutionProposalPayload): Promise<SolutionProposal> {
     await this.simulateDelay(300)
     const currentUser = authService.getCurrentUser()
     const all = this.getStoredProposals()
 
-    // Fetch problem details for meta
+    // Fetch problem details for metadata
     const problem = await problemService.getProblemById(payload.problemId)
 
     const newProposal: SolutionProposal = {
@@ -120,9 +133,10 @@ export class MockSolutionService {
       estimatedCostNumber: parseInt(payload.estimatedCost.replace(/[^0-9]/g, "")) || 250000,
       timeline: payload.timeline,
       requiredResources: payload.requiredResources,
-      teamFacultyLead: payload.teamFacultyLead || "Dr. R. K. Mishra",
+      teamFacultyLead: payload.teamFacultyLead || "Dr. Ananya Sharma",
       facultyDepartment: payload.facultyDepartment || "Dept. of Civil & Environmental Engineering",
-      studentTeamSize: payload.studentTeamSize || 4,
+      studentTeamSize: payload.studentParticipants?.length || payload.studentTeamSize || 4,
+      studentParticipants: payload.studentParticipants || [],
       reportFileName: payload.reportFileName || "Solution_Technical_Proposal.pdf",
       reportFileSize: payload.reportFileSize || "3.5 MB",
       reportFileType: payload.reportFileType || "application/pdf",
@@ -143,7 +157,7 @@ export class MockSolutionService {
     const target = all.find((p) => p.id === proposalId)
     if (!target) return false
 
-    // Update target proposal
+    // Update target proposal to sponsored/active
     target.status = "sponsored"
     target.sponsorshipStatus = "sponsored"
     target.sponsorName = sponsorName || "Department of Higher & Technical Education / CSR Partner"
@@ -171,6 +185,24 @@ export class MockSolutionService {
     target.status = "shortlisted"
     target.sponsorshipStatus = "shortlisted"
 
+    this.saveProposals(all)
+    return true
+  }
+
+  async updateProposalStage(
+    proposalId: string,
+    stage: "Design" | "Prototype" | "Pilot" | "Deployed" | "Impact Verified",
+    citizensBenefited?: number
+  ): Promise<boolean> {
+    await this.simulateDelay(150)
+    const all = this.getStoredProposals()
+    const target = all.find((p) => p.id === proposalId)
+    if (!target) return false
+
+    target.currentImplementationStage = stage
+    if (citizensBenefited !== undefined) {
+      target.citizensBenefitedCount = citizensBenefited
+    }
     this.saveProposals(all)
     return true
   }

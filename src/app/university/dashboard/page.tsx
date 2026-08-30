@@ -41,6 +41,7 @@ import { IndustryCollaborationsCard } from "@/features/university/components/ind
 import { UniversityImpactCard } from "@/features/university/components/university-impact-card"
 import { QuickActionsBar } from "@/features/university/components/quick-actions-bar"
 import { UniversityProjectModal } from "@/features/university/components/university-project-modal"
+import { UniversitySolutionPortfolio } from "@/features/university/components/university-solution-portfolio"
 
 const UNIVERSITY_SIDEBAR_SECTIONS: SidebarSection[] = [
   {
@@ -203,6 +204,9 @@ export default function UniversityDashboardPage() {
 
               {/* 2. Statewide Hierarchy Lineage Flowchart Banner */}
               <HierarchyRelationshipBanner />
+
+              {/* 2.5 My Solution Portfolio (Proposed, Active, Completed) */}
+              <UniversitySolutionPortfolio universityName={data.institutionName} />
 
               {/* 3. Problem Overview & Recommendations */}
               <div id="problems" className="space-y-6">

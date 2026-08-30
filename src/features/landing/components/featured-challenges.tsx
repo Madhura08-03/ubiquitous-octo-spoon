@@ -33,13 +33,13 @@ export function FeaturedChallenges({ onViewChallenge }: FeaturedChallengesProps)
           </div>
 
           <Link
-            href="#challenges"
+            href="/feed"
             className={buttonVariants({
               variant: "outline",
               className: "w-fit text-xs font-semibold gap-1.5 shrink-0",
             })}
           >
-            <span>Explore All 2,481 Challenges</span>
+            <span>Explore 2,481 Challenges</span>
             <ArrowRight className="size-3.5" />
           </Link>
         </div>

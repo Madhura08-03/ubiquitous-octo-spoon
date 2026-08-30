@@ -1,14 +1,16 @@
 "use client"
 
 import * as React from "react"
+import Link from "next/link"
 import {
   FileText,
   Download,
   Building2,
   Lock,
-  CheckCircle2,
   Sparkles,
   ShieldAlert,
+  Users,
+  ExternalLink,
 } from "lucide-react"
 import { toast } from "sonner"
 
@@ -98,33 +100,43 @@ export function SolutionDetailsModal({
             {proposal.aiRelevanceScore && (
               <div className="flex items-center gap-1 text-xs font-mono font-bold text-primary bg-primary/10 px-2.5 py-0.5 rounded-full">
                 <Sparkles className="size-3 text-lime-500" />
-                <span>{proposal.aiRelevanceScore}% Capability Match</span>
+                <span>{proposal.aiRelevanceScore}% Domain Match</span>
               </div>
             )}
           </div>
 
-          <DialogTitle className="text-base sm:text-lg font-bold leading-snug">
+          <DialogTitle className="text-base sm:text-lg font-bold text-foreground">
             {proposal.title}
           </DialogTitle>
 
-          <DialogDescription className="text-xs text-muted-foreground flex items-center gap-1.5 font-medium text-foreground">
-            <Building2 className="size-3.5 text-primary" />
-            <span>Proposed by {proposal.universityName}</span>
+          <DialogDescription className="text-xs text-muted-foreground flex items-center gap-1.5">
+            <Building2 className="size-3.5 text-primary shrink-0" />
+            <span>Proposing Institution: <strong>{proposal.universityName}</strong></span>
           </DialogDescription>
         </DialogHeader>
 
-        <div className="space-y-5 pt-2 text-xs">
-          {/* Summary */}
-          <div className="space-y-1.5">
-            <span className="text-[10px] uppercase font-bold text-muted-foreground tracking-wider">
-              Solution Approach & Summary
-            </span>
-            <p className="text-xs text-foreground leading-relaxed bg-muted/20 p-3.5 rounded-xl border border-border">
-              {proposal.detailedDescription || proposal.shortDescription}
+        <div className="space-y-4 py-2">
+          {/* Executive Summary */}
+          <div className="space-y-1">
+            <h4 className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
+              Executive Summary
+            </h4>
+            <p className="text-xs text-foreground leading-relaxed">
+              {proposal.shortDescription}
             </p>
           </div>
 
-          {/* Technical Specs & Impact */}
+          {/* Detailed Methodology */}
+          <div className="space-y-1">
+            <h4 className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
+              Technical Architecture & Methodology
+            </h4>
+            <p className="text-xs text-muted-foreground leading-relaxed whitespace-pre-line">
+              {proposal.detailedDescription}
+            </p>
+          </div>
+
+          {/* Key Specifications Grid */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div className="p-3.5 rounded-xl border border-border bg-card space-y-1">
               <span className="text-[10px] uppercase font-bold text-muted-foreground">Proposed Technology</span>
@@ -144,12 +156,46 @@ export function SolutionDetailsModal({
             </div>
 
             <div className="p-3.5 rounded-xl border border-border bg-card space-y-1">
-              <span className="text-[10px] uppercase font-bold text-muted-foreground">Faculty Lead & Team</span>
+              <span className="text-[10px] uppercase font-bold text-muted-foreground">Faculty Lead & Department</span>
               <p className="text-xs font-semibold text-foreground">
-                {proposal.teamFacultyLead || "Dr. R. K. Mishra"} ({proposal.studentTeamSize || 4} Students)
+                {proposal.teamFacultyLead || "Dr. Ananya Sharma"} &bull; {proposal.facultyDepartment || "Engineering"}
               </p>
             </div>
           </div>
+
+          {/* Student Research Team with Public Profile Links */}
+          {proposal.studentParticipants && proposal.studentParticipants.length > 0 && (
+            <div className="p-3.5 rounded-xl border border-border bg-card space-y-2.5">
+              <span className="text-[10px] uppercase font-bold text-muted-foreground flex items-center gap-1.5">
+                <Users className="size-3.5 text-primary" />
+                <span>Student Research Team ({proposal.studentParticipants.length} Participants)</span>
+              </span>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                {proposal.studentParticipants.map((sp) => (
+                  <div
+                    key={sp.studentId}
+                    className="flex items-center justify-between p-2.5 rounded-lg bg-muted/20 border border-border text-xs"
+                  >
+                    <div className="min-w-0 pr-2">
+                      <Link
+                        href={`/profile/${sp.studentId}`}
+                        className="font-bold text-foreground hover:text-primary transition-colors inline-flex items-center gap-1 truncate"
+                        title="View public student profile"
+                      >
+                        <span className="truncate">{sp.studentName}</span>
+                        <ExternalLink className="size-2.5 text-muted-foreground shrink-0" />
+                      </Link>
+                      <p className="text-[10px] text-muted-foreground truncate">{sp.department}</p>
+                    </div>
+                    <Badge variant="secondary" className="text-[9px] font-bold shrink-0">
+                      {sp.role}
+                    </Badge>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
 
           {/* Report Document Section with Role-based Protection */}
           <div className="rounded-xl border border-border bg-muted/20 p-4 space-y-2.5">
@@ -220,23 +266,6 @@ export function SolutionDetailsModal({
             {role === "industry" && onSponsor && (
               <Button
                 type="button"
-                variant="default"
-                size="sm"
-                onClick={() => {
-                  onOpenChange(false)
-                  onSponsor(proposal)
-                }}
-                className="text-xs font-bold bg-purple-600 hover:bg-purple-700 text-white gap-1.5"
-              >
-                <Building2 className="size-3.5" />
-                <span>Express Sponsorship Interest</span>
-              </Button>
-            )}
-
-            {isGovt && onSponsor && proposal.status !== "sponsored" && (
-              <Button
-                type="button"
-                variant="default"
                 size="sm"
                 onClick={() => {
                   onOpenChange(false)
@@ -244,8 +273,7 @@ export function SolutionDetailsModal({
                 }}
                 className="text-xs font-bold bg-primary text-primary-foreground hover:bg-primary/90 gap-1.5"
               >
-                <CheckCircle2 className="size-3.5" />
-                <span>Select / Sponsor Solution</span>
+                <span>Express Sponsorship Interest</span>
               </Button>
             )}
           </div>

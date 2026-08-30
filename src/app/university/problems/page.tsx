@@ -33,6 +33,7 @@ import { UniversityProblemFiltersBar } from "@/features/university/components/un
 import { AIMatchModal } from "@/features/university/components/ai-match-modal"
 import { UniversityProblemReviewModal } from "@/features/university/components/university-problem-review-modal"
 import { SolutionDetailsModal } from "@/features/solutions/components/solution-details-modal"
+import { UniversitySolutionPortfolio } from "@/features/university/components/university-solution-portfolio"
 
 import {
   UniversityProblemRecord,
@@ -358,6 +359,12 @@ export default function UniversityProblemsPage() {
           </div>
 
           {/* Problem List Content */}
+          {activeTab === "proposals" && (
+            <div className="space-y-4">
+              <UniversitySolutionPortfolio universityName={dashboardData?.institutionName} />
+            </div>
+          )}
+
           {isLoading ? (
             <div className="p-12 text-center text-xs text-muted-foreground">
               Loading open challenges...

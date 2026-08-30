@@ -1,6 +1,7 @@
 "use client"
 
 import * as React from "react"
+import Link from "next/link"
 import {
   CheckCircle2,
   Mail,
@@ -210,15 +211,24 @@ export function MentorDetailsModal({
         </div>
 
         <DialogFooter className="pt-4 border-t border-border flex items-center justify-between gap-2">
-          <Button
-            type="button"
-            variant="outline"
-            size="sm"
-            onClick={() => onOpenChange(false)}
-            className="text-xs"
-          >
-            Close
-          </Button>
+          <div className="flex items-center gap-2">
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={() => onOpenChange(false)}
+              className="text-xs"
+            >
+              Close
+            </Button>
+
+            <Link
+              href={`/profile/${mentor.id}`}
+              className="text-xs font-semibold px-3 py-1.5 rounded-lg border border-border bg-background hover:bg-muted text-foreground transition-colors"
+            >
+              Public Profile &rarr;
+            </Link>
+          </div>
 
           {onManageTeams && (
             <Button

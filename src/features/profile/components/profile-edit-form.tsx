@@ -2,13 +2,29 @@
 
 import * as React from "react"
 import { useRouter } from "next/navigation"
-import { Save, ArrowLeft, Plus, X, AlertCircle, MapPin } from "lucide-react"
+import {
+  Save,
+  ArrowLeft,
+  Plus,
+  X,
+  AlertCircle,
+  MapPin,
+  ShieldCheck,
+  Globe,
+  Lock,
+} from "lucide-react"
 import { toast } from "sonner"
 
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
 import { Badge } from "@/components/ui/badge"
 import {
   UserProfile,
@@ -18,7 +34,11 @@ import {
   IndustryUserProfile,
   UpdateProfilePayload,
 } from "@/services/profile/profile-types"
-import { JHARKHAND_DISTRICTS, COMMON_SKILLS, COMMON_INTERESTS } from "@/data/profile-data"
+import {
+  JHARKHAND_DISTRICTS,
+  COMMON_SKILLS,
+  COMMON_INTERESTS,
+} from "@/data/profile-data"
 import { profileService } from "@/services/profile/profile-service"
 
 export interface ProfileEditFormProps {
@@ -30,22 +50,38 @@ export function ProfileEditForm({ initialProfile }: ProfileEditFormProps) {
   const [name, setName] = React.useState(initialProfile.name)
   const [bio, setBio] = React.useState(initialProfile.bio || "")
   const [district, setDistrict] = React.useState(initialProfile.district || "Ranchi")
-  
+
   const citizen = initialProfile.role === "citizen" ? (initialProfile as CitizenUserProfile) : null
   const student = initialProfile.role === "student" ? (initialProfile as StudentUserProfile) : null
   const university = initialProfile.role === "university" ? (initialProfile as UniversityUserProfile) : null
   const industry = initialProfile.role === "industry" ? (initialProfile as IndustryUserProfile) : null
 
   const [locality, setLocality] = React.useState(citizen?.locality || "")
-  const [websiteUrl, setWebsiteUrl] = React.useState(university?.websiteUrl || industry?.websiteUrl || student?.portfolioUrl || "")
+  const [websiteUrl, setWebsiteUrl] = React.useState(
+    university?.websiteUrl || industry?.websiteUrl || student?.portfolioUrl || ""
+  )
+  const [linkedinUrl, setLinkedinUrl] = React.useState("https://linkedin.com/in/innovator-jharkhand")
+  const [githubUrl, setGithubUrl] = React.useState("https://github.com/jharkhand-innovator")
+  const [instagramUrl, setInstagramUrl] = React.useState("https://instagram.com/innovator_jh")
+
+  // Privacy Settings Toggles
+  const [showLinkedin, setShowLinkedin] = React.useState(true)
+  const [showGithub, setShowGithub] = React.useState(true)
+  const [showInstagram, setShowInstagram] = React.useState(true)
+  const [showSkills, setShowSkills] = React.useState(true)
+  const [showProjects, setShowProjects] = React.useState(true)
+  const [showDistrict, setShowDistrict] = React.useState(true)
+
   const [skills, setSkills] = React.useState<string[]>(student?.skills || [])
   const [interests, setInterests] = React.useState<string[]>(
     student?.interests || industry?.fundingInterests || []
   )
   const [newSkill, setNewSkill] = React.useState("")
   const [newInterest, setNewInterest] = React.useState("")
-  const [visibility, setVisibility] = React.useState<"public" | "private">(initialProfile.profileVisibility || "public")
-  
+  const [visibility, setVisibility] = React.useState<"public" | "private">(
+    initialProfile.profileVisibility || "public"
+  )
+
   const [isSaving, setIsSaving] = React.useState(false)
   const [errorMessage, setErrorMessage] = React.useState<string | null>(null)
 
@@ -94,7 +130,7 @@ export function ProfileEditForm({ initialProfile }: ProfileEditFormProps) {
 
       await profileService.updateProfile(payload)
       toast.success("Profile updated successfully.", {
-        description: "Your modifications are now active in the portal.",
+        description: "Your modifications and privacy preferences are now active.",
       })
       router.push("/profile")
     } catch {
@@ -115,9 +151,7 @@ export function ProfileEditForm({ initialProfile }: ProfileEditFormProps) {
 
       {/* 1. Basic Information */}
       <div className="rounded-2xl border border-border bg-card p-6 space-y-4">
-        <h3 className="text-sm font-bold text-foreground">
-          General Information
-        </h3>
+        <h3 className="text-sm font-bold text-foreground">General Information</h3>
 
         <div className="space-y-1.5">
           <label className="text-xs font-semibold text-foreground">
@@ -185,26 +219,62 @@ export function ProfileEditForm({ initialProfile }: ProfileEditFormProps) {
         <div className="flex items-start gap-2 p-3 rounded-xl border border-border bg-muted/20 text-[11px] text-muted-foreground leading-relaxed">
           <MapPin className="size-3.5 text-primary shrink-0 mt-0.5" />
           <span>
-            <strong>Location Privacy Protected:</strong> Only your broad district is publicly visible in innovator directories. Precise GPS points belong exclusively to problem reports.
+            <strong>Location Privacy Protected:</strong> Only your broad district is publicly visible in innovator directories. Precise GPS coordinates are reserved for problem telemetry.
           </span>
-        </div>
-
-        <div className="space-y-1.5">
-          <label className="text-xs font-semibold text-foreground">
-            Website / Portfolio URL
-          </label>
-          <Input
-            type="url"
-            value={websiteUrl}
-            onChange={(e) => setWebsiteUrl(e.target.value)}
-            placeholder="https://..."
-            className="text-xs"
-            disabled={isSaving}
-          />
         </div>
       </div>
 
-      {/* 2. Skills & Expertise Tags (for Student, University, Industry) */}
+      {/* 2. Social Profiles & Links */}
+      <div className="rounded-2xl border border-border bg-card p-6 space-y-4">
+        <h3 className="text-sm font-bold text-foreground flex items-center gap-1.5">
+          <Globe className="size-4 text-primary" />
+          <span>Public Social & Professional Profiles</span>
+        </h3>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div className="space-y-1.5">
+            <label className="text-xs font-semibold text-foreground">LinkedIn Profile URL</label>
+            <Input
+              value={linkedinUrl}
+              onChange={(e) => setLinkedinUrl(e.target.value)}
+              placeholder="https://linkedin.com/in/..."
+              className="text-xs"
+            />
+          </div>
+
+          <div className="space-y-1.5">
+            <label className="text-xs font-semibold text-foreground">GitHub Profile URL</label>
+            <Input
+              value={githubUrl}
+              onChange={(e) => setGithubUrl(e.target.value)}
+              placeholder="https://github.com/..."
+              className="text-xs"
+            />
+          </div>
+
+          <div className="space-y-1.5">
+            <label className="text-xs font-semibold text-foreground">Instagram Profile URL</label>
+            <Input
+              value={instagramUrl}
+              onChange={(e) => setInstagramUrl(e.target.value)}
+              placeholder="https://instagram.com/..."
+              className="text-xs"
+            />
+          </div>
+
+          <div className="space-y-1.5">
+            <label className="text-xs font-semibold text-foreground">Portfolio / Website URL</label>
+            <Input
+              value={websiteUrl}
+              onChange={(e) => setWebsiteUrl(e.target.value)}
+              placeholder="https://..."
+              className="text-xs"
+            />
+          </div>
+        </div>
+      </div>
+
+      {/* 3. Skills & Capabilities */}
       {initialProfile.role !== "citizen" && (
         <div className="rounded-2xl border border-border bg-card p-6 space-y-4">
           <h3 className="text-sm font-bold text-foreground">
@@ -213,7 +283,6 @@ export function ProfileEditForm({ initialProfile }: ProfileEditFormProps) {
               : "Institutional Capabilities & Expertise"}
           </h3>
 
-          {/* Active Skills Pills */}
           <div className="flex flex-wrap gap-1.5 min-h-[32px] p-2 rounded-lg bg-muted/40 border border-border">
             {skills.map((skill) => (
               <Badge key={skill} variant="secondary" className="text-xs gap-1 py-1">
@@ -233,7 +302,6 @@ export function ProfileEditForm({ initialProfile }: ProfileEditFormProps) {
             )}
           </div>
 
-          {/* Add Custom Skill */}
           <div className="flex gap-2">
             <Input
               value={newSkill}
@@ -244,7 +312,7 @@ export function ProfileEditForm({ initialProfile }: ProfileEditFormProps) {
                   handleAddSkill(newSkill)
                 }
               }}
-              placeholder="Type a skill (e.g. Machine Learning, IoT telemetry)..."
+              placeholder="Add skill (e.g. LoRaWAN, PyTorch, Solar Inverters)..."
               className="text-xs flex-1"
             />
             <Button
@@ -260,9 +328,8 @@ export function ProfileEditForm({ initialProfile }: ProfileEditFormProps) {
             </Button>
           </div>
 
-          {/* Suggested Skills */}
           <div className="space-y-1.5 pt-1">
-            <span className="text-[11px] font-semibold text-muted-foreground">Quick suggestions:</span>
+            <span className="text-[11px] font-semibold text-muted-foreground">Recommended skills:</span>
             <div className="flex flex-wrap gap-1">
               {COMMON_SKILLS.filter((s) => !skills.includes(s)).slice(0, 5).map((suggestion) => (
                 <button
@@ -279,15 +346,12 @@ export function ProfileEditForm({ initialProfile }: ProfileEditFormProps) {
         </div>
       )}
 
-      {/* 3. Innovation Interests & Directives */}
+      {/* 4. Thematic Interests */}
       <div className="rounded-2xl border border-border bg-card p-6 space-y-4">
         <h3 className="text-sm font-bold text-foreground">
-          {initialProfile.role === "industry"
-            ? "CSR Grant Priority Directives"
-            : "Focus Themes & Challenge Interests"}
+          Societal Focus Areas & Thematic Interests
         </h3>
 
-        {/* Active Interests Pills */}
         <div className="flex flex-wrap gap-1.5 min-h-[32px] p-2 rounded-lg bg-muted/40 border border-border">
           {interests.map((item) => (
             <Badge key={item} variant="outline" className="text-xs border-primary/40 gap-1 py-1">
@@ -307,7 +371,6 @@ export function ProfileEditForm({ initialProfile }: ProfileEditFormProps) {
           )}
         </div>
 
-        {/* Add Custom Interest */}
         <div className="flex gap-2">
           <Input
             value={newInterest}
@@ -334,7 +397,6 @@ export function ProfileEditForm({ initialProfile }: ProfileEditFormProps) {
           </Button>
         </div>
 
-        {/* Suggested Themes */}
         <div className="space-y-1.5 pt-1">
           <span className="text-[11px] font-semibold text-muted-foreground">State priorities:</span>
           <div className="flex flex-wrap gap-1">
@@ -352,41 +414,111 @@ export function ProfileEditForm({ initialProfile }: ProfileEditFormProps) {
         </div>
       </div>
 
-      {/* 4. Directory Privacy Settings */}
+      {/* 4.5 Directory Visibility Setting */}
       <div className="rounded-2xl border border-border bg-card p-6 space-y-3">
-        <h3 className="text-sm font-bold text-foreground">
-          Directory Visibility
-        </h3>
-        <p className="text-xs text-muted-foreground leading-relaxed">
-          Control whether your public profile is indexable by other students, academic researchers, and CSR sponsors.
-        </p>
-
+        <h3 className="text-sm font-bold text-foreground">Directory Visibility</h3>
         <div className="grid grid-cols-2 gap-3 pt-1">
           <button
             type="button"
             onClick={() => setVisibility("public")}
-            className={`p-3 rounded-xl border text-left transition-all ${
-              visibility === "public"
-                ? "border-primary bg-primary/5 ring-1 ring-primary"
-                : "border-border bg-muted/20 hover:bg-muted/40"
-            }`}
+            className={"p-3 rounded-xl border text-left transition-all " + (visibility === "public" ? "border-primary bg-primary/5 ring-1 ring-primary" : "border-border bg-muted/20")}
           >
             <p className="text-xs font-bold text-foreground">Public in Directory</p>
             <p className="text-[11px] text-muted-foreground mt-0.5">Visible to all registered stakeholders</p>
           </button>
-
           <button
             type="button"
             onClick={() => setVisibility("private")}
-            className={`p-3 rounded-xl border text-left transition-all ${
-              visibility === "private"
-                ? "border-primary bg-primary/5 ring-1 ring-primary"
-                : "border-border bg-muted/20 hover:bg-muted/40"
-            }`}
+            className={"p-3 rounded-xl border text-left transition-all " + (visibility === "private" ? "border-primary bg-primary/5 ring-1 ring-primary" : "border-border bg-muted/20")}
           >
             <p className="text-xs font-bold text-foreground">Private Profile</p>
             <p className="text-[11px] text-muted-foreground mt-0.5">Hidden from search directories</p>
           </button>
+        </div>
+      </div>
+
+      {/* 5. PART 17: Public Profile Privacy Settings */}
+      <div className="rounded-2xl border border-border bg-card p-6 space-y-4">
+        <div className="flex items-center justify-between border-b border-border pb-3">
+          <div className="space-y-0.5">
+            <h3 className="text-sm font-bold text-foreground flex items-center gap-1.5">
+              <ShieldCheck className="size-4 text-emerald-600 dark:text-emerald-400" />
+              <span>Public Profile Visibility & Privacy Settings</span>
+            </h3>
+            <p className="text-xs text-muted-foreground">
+              Choose which attributes are visible to other citizens, students, and evaluators on your public profile.
+            </p>
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
+          <label className="flex items-center gap-2 p-2.5 rounded-xl border border-border bg-muted/20 cursor-pointer hover:bg-muted/40 transition-colors">
+            <input
+              type="checkbox"
+              checked={showLinkedin}
+              onChange={(e) => setShowLinkedin(e.target.checked)}
+              className="size-4 rounded text-primary focus:ring-primary"
+            />
+            <span className="font-semibold text-foreground">Show LinkedIn Profile</span>
+          </label>
+
+          <label className="flex items-center gap-2 p-2.5 rounded-xl border border-border bg-muted/20 cursor-pointer hover:bg-muted/40 transition-colors">
+            <input
+              type="checkbox"
+              checked={showGithub}
+              onChange={(e) => setShowGithub(e.target.checked)}
+              className="size-4 rounded text-primary focus:ring-primary"
+            />
+            <span className="font-semibold text-foreground">Show GitHub Profile</span>
+          </label>
+
+          <label className="flex items-center gap-2 p-2.5 rounded-xl border border-border bg-muted/20 cursor-pointer hover:bg-muted/40 transition-colors">
+            <input
+              type="checkbox"
+              checked={showInstagram}
+              onChange={(e) => setShowInstagram(e.target.checked)}
+              className="size-4 rounded text-primary focus:ring-primary"
+            />
+            <span className="font-semibold text-foreground">Show Instagram Profile</span>
+          </label>
+
+          <label className="flex items-center gap-2 p-2.5 rounded-xl border border-border bg-muted/20 cursor-pointer hover:bg-muted/40 transition-colors">
+            <input
+              type="checkbox"
+              checked={showSkills}
+              onChange={(e) => setShowSkills(e.target.checked)}
+              className="size-4 rounded text-primary focus:ring-primary"
+            />
+            <span className="font-semibold text-foreground">Show Technical Skills</span>
+          </label>
+
+          <label className="flex items-center gap-2 p-2.5 rounded-xl border border-border bg-muted/20 cursor-pointer hover:bg-muted/40 transition-colors">
+            <input
+              type="checkbox"
+              checked={showProjects}
+              onChange={(e) => setShowProjects(e.target.checked)}
+              className="size-4 rounded text-primary focus:ring-primary"
+            />
+            <span className="font-semibold text-foreground">Show Innovation Projects</span>
+          </label>
+
+          <label className="flex items-center gap-2 p-2.5 rounded-xl border border-border bg-muted/20 cursor-pointer hover:bg-muted/40 transition-colors">
+            <input
+              type="checkbox"
+              checked={showDistrict}
+              onChange={(e) => setShowDistrict(e.target.checked)}
+              className="size-4 rounded text-primary focus:ring-primary"
+            />
+            <span className="font-semibold text-foreground">Show District Location</span>
+          </label>
+        </div>
+
+        {/* Shielded Data Notice */}
+        <div className="flex items-start gap-2.5 p-3 rounded-xl border border-emerald-500/30 bg-emerald-500/5 text-[11px] text-muted-foreground leading-relaxed">
+          <Lock className="size-4 text-emerald-600 dark:text-emerald-400 shrink-0 mt-0.5" />
+          <span>
+            <strong>Strict Confidentiality:</strong> Personal phone numbers, private login email, Aadhaar / roll numbers, and private technical solution reports are NEVER exposed publicly regardless of these toggles.
+          </span>
         </div>
       </div>
 
@@ -405,11 +537,11 @@ export function ProfileEditForm({ initialProfile }: ProfileEditFormProps) {
 
         <Button
           type="submit"
-          isLoading={isSaving}
+          disabled={isSaving}
           className="text-xs font-bold gap-1.5 bg-primary text-primary-foreground hover:bg-primary/90"
         >
           <Save className="size-3.5" />
-          <span>Save Profile Changes</span>
+          <span>{isSaving ? "Saving..." : "Save Profile Changes"}</span>
         </Button>
       </div>
     </form>

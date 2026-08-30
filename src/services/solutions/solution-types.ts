@@ -14,6 +14,18 @@ export type SolutionSponsorshipStatus =
   | "shortlisted"
   | "sponsored"
 
+export interface SolutionStudentParticipant {
+  studentId: string
+  studentName: string
+  studentEmail: string
+  universityId: string
+  universityName: string
+  department: string
+  role: string // e.g. "Team Lead" | "IoT Developer" | "Embedded Systems Engineer" | "AI/ML Researcher" | "Data Analyst" | "Hardware Engineer" | "Field Researcher"
+  joinedAt: string
+  avatarUrl?: string
+}
+
 export interface SolutionProposal {
   id: string
   problemId: string
@@ -35,6 +47,7 @@ export interface SolutionProposal {
   teamFacultyLead?: string
   facultyDepartment?: string
   studentTeamSize?: number
+  studentParticipants?: SolutionStudentParticipant[]
   reportFileName?: string
   reportFileSize?: string
   reportFileType?: string
@@ -46,6 +59,7 @@ export interface SolutionProposal {
   currentImplementationStage?: "Design" | "Prototype" | "Pilot" | "Deployed" | "Impact Verified"
   industryInterestCount?: number
   feedbackNotes?: string
+  citizensBenefitedCount?: number
 }
 
 export interface CreateSolutionProposalPayload {
@@ -61,6 +75,7 @@ export interface CreateSolutionProposalPayload {
   teamFacultyLead?: string
   facultyDepartment?: string
   studentTeamSize?: number
+  studentParticipants?: SolutionStudentParticipant[]
   reportFileName?: string
   reportFileSize?: string
   reportFileType?: string
@@ -68,11 +83,16 @@ export interface CreateSolutionProposalPayload {
 
 export interface SolutionSponsorshipInterestPayload {
   proposalId: string
-  problemId: string
+  problemId?: string
   companyName: string
   contactPerson: string
-  contactEmail: string
-  proposedGrantAmount: string
-  sponsorshipType: "Grant Funding" | "Hardware & Equipment" | "Field Test Pilot" | "Full CSR Adoption"
-  message: string
+  email?: string
+  contactEmail?: string
+  phone?: string
+  contactPhone?: string
+  interestType?: "grant_funding" | "pilot_support" | "csr_deployment" | "technical_mentorship"
+  sponsorshipType?: string
+  proposedGrantAmount?: string
+  comments?: string
+  message?: string
 }
