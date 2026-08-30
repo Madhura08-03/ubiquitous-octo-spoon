@@ -1,3 +1,4 @@
+import { NotificationEvents } from "@/services/notifications/notification-events"
 import {
   StudentProject,
   ProjectMilestone,
@@ -381,6 +382,11 @@ class ProjectService {
     })
 
     this.saveState()
+    if (payload.action === "approve") {
+      NotificationEvents.notifyMilestoneApproved(payload.projectId, this.projects[projIndex].milestones[mIndex].title)
+    } else {
+      NotificationEvents.notifyMilestoneChangesRequested(payload.projectId, this.projects[projIndex].milestones[mIndex].title, payload.feedback)
+    }
     return true
   }
 
@@ -445,6 +451,7 @@ class ProjectService {
     })
 
     this.saveState()
+    NotificationEvents.notifyMilestoneSubmitted(projectId, this.projects[projIndex].milestones[mIndex].title)
     return true
   }
 
@@ -478,6 +485,7 @@ class ProjectService {
     })
 
     this.saveState()
+    NotificationEvents.notifyEvidenceUploaded(projectId, payload.fileName, payload.uploadedBy)
     return true
   }
 
@@ -509,6 +517,7 @@ class ProjectService {
     })
 
     this.saveState()
+    NotificationEvents.notifyRiskAlert(projectId, payload.title, payload.severity)
     return true
   }
 

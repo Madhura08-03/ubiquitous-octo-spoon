@@ -3,13 +3,14 @@
 import * as React from "react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
-import { Shield, Search, Menu, User, Sparkles, LogOut, Activity, GraduationCap, FolderGit2, Building2 } from "lucide-react"
+import { Shield, Search, Menu, User, Sparkles, LogOut, Activity, GraduationCap, FolderGit2, Building2, Bell } from "lucide-react"
 
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import { Sheet, SheetContent, SheetTrigger, SheetHeader, SheetTitle } from "@/components/ui/sheet"
 import { AuthUser } from "@/services/auth/auth-types"
 import { LogoutDialog } from "@/features/auth/components/logout-dialog"
+import { NotificationCenter } from "@/features/notifications/components/notification-center"
 
 export interface NavLink {
   label: string
@@ -179,6 +180,8 @@ export function PublicNavbar({
                   <span className="hidden lg:inline">Onboarding</span>
                 </Link>
 
+                <NotificationCenter />
+
                 <Link
                   href="/profile"
                   className="inline-flex items-center gap-2 px-3 py-1.5 rounded-xl border border-border bg-card hover:bg-muted text-xs font-bold text-foreground transition-colors shadow-xs"
@@ -276,6 +279,14 @@ export function PublicNavbar({
                       >
                         <User className="size-4 text-primary" />
                         <span>My Profile ({authUser.name})</span>
+                      </Link>
+                      <Link
+                        href="/notifications"
+                        onClick={() => setIsOpen(false)}
+                        className="text-sm font-medium text-muted-foreground hover:text-foreground py-1.5 transition-colors flex items-center gap-2"
+                      >
+                        <Bell className="size-4 text-primary" />
+                        <span>Notifications & Alerts</span>
                       </Link>
                       {authUser.role === "university" && (
                         <Link

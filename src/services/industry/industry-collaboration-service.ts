@@ -1,3 +1,4 @@
+import { NotificationEvents } from "@/services/notifications/notification-events"
 import {
   IndustryProfile,
   IndustrySolutionInterest,
@@ -138,6 +139,7 @@ export class IndustryCollaborationService {
     }
     list.unshift(newInterest)
     this.saveInterests(list)
+    NotificationEvents.notifySponsorshipInterest(payload.universityId, payload.industryName, payload.solutionTitle, payload.proposedFunding)
     return { success: true, interest: newInterest }
   }
 
@@ -203,6 +205,11 @@ export class IndustryCollaborationService {
     }
     list[idx].updatedAt = new Date().toISOString()
     this.saveInterests(list)
+    if (response.action === "accept") {
+      NotificationEvents.notifySponsorshipAccepted(list[idx].industryId, list[idx].universityName, list[idx].solutionTitle)
+    } else {
+      NotificationEvents.notifySponsorshipDeclined(list[idx].industryId, list[idx].universityName, response.reason || "Declined by university.")
+    }
     return true
   }
 
@@ -241,6 +248,7 @@ export class IndustryCollaborationService {
       this.saveInterests(interests)
     }
 
+    NotificationEvents.notifyCollaborationCreated(newCollab.id, newCollab.title, newCollab.industryName, newCollab.universityName)
     return newCollab
   }
 
