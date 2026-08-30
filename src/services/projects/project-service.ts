@@ -1,356 +1,415 @@
 import {
   StudentProject,
-  SubmitMilestonePayload,
-  ReviewMilestonePayload,
-  AddProjectDocumentPayload,
   ProjectMilestone,
   ProjectDocument,
-  ProjectActivityItem,
+  ProjectActivityEvent,
+  ProjectTask,
+  CreateProjectTaskPayload,
+  UpdateProjectTaskPayload,
+  TaskStatus,
+  MilestoneSubmissionPayload,
+  MentorReviewSubmissionPayload,
+  StudentTeamMember,
 } from "./project-types"
 import { MOCK_STUDENT_PROJECTS } from "@/data/projects/projects-data"
 
-const STORAGE_KEY = "portal_student_projects_v1"
+const STORAGE_KEY_PROJECTS = "sportal_mock_student_projects"
 
-export class MockProjectService {
+class ProjectService {
   private projects: StudentProject[] = []
-  private listeners: Set<() => void> = new Set()
-  private initialized: boolean = false
+  private listeners: Array<() => void> = []
 
   constructor() {
-    this.initData()
+    this.loadState()
   }
 
-  private initData(): void {
-    if (typeof window === "undefined") {
-      this.projects = [...MOCK_STUDENT_PROJECTS]
-      return
-    }
-
-    try {
-      const stored = sessionStorage.getItem(STORAGE_KEY)
-      if (stored) {
-        this.projects = JSON.parse(stored)
-      } else {
-        this.projects = [...MOCK_STUDENT_PROJECTS]
-        sessionStorage.setItem(STORAGE_KEY, JSON.stringify(this.projects))
-      }
-    } catch {
-      this.projects = [...MOCK_STUDENT_PROJECTS]
-    }
-    this.initialized = true
-  }
-
-  private save(): void {
+  private loadState() {
     if (typeof window !== "undefined") {
-      try {
-        sessionStorage.setItem(STORAGE_KEY, JSON.stringify(this.projects))
-      } catch (err) {
-        console.error("Failed to persist project data", err)
+      const stored = localStorage.getItem(STORAGE_KEY_PROJECTS)
+      if (stored) {
+        try {
+          this.projects = JSON.parse(stored)
+          return
+        } catch (e) {
+          console.error("Failed to parse stored projects", e)
+        }
       }
+    }
+    this.projects = JSON.parse(JSON.stringify(MOCK_STUDENT_PROJECTS))
+  }
+
+  private saveState() {
+    if (typeof window !== "undefined") {
+      localStorage.setItem(STORAGE_KEY_PROJECTS, JSON.stringify(this.projects))
     }
     this.notify()
   }
 
-  subscribe(listener: () => void): () => void {
-    this.listeners.add(listener)
+  public subscribe(listener: () => void): () => void {
+    this.listeners.push(listener)
     return () => {
-      this.listeners.delete(listener)
+      this.listeners = this.listeners.filter((l) => l !== listener)
     }
   }
 
-  protected notify(): void {
-    this.listeners.forEach((listener) => {
-      try {
-        listener()
-      } catch (e) {
-        console.error("Error in project listener", e)
-      }
-    })
+  private notify() {
+    this.listeners.forEach((l) => l())
   }
 
+  // --- QUERY METHODS ---
+
   async getAllProjects(): Promise<StudentProject[]> {
-    this.initData()
-    return [...this.projects]
+    return JSON.parse(JSON.stringify(this.projects))
   }
 
   async getProjectById(projectId: string): Promise<StudentProject | null> {
-    this.initData()
-    const project = this.projects.find((p) => p.id === projectId)
-    return project ? { ...project } : null
-  }
-
-  async getProjectForStudent(projectId: string, studentId: string, studentEmail?: string): Promise<StudentProject | null> {
-    this.initData()
-    const project = this.projects.find((p) => p.id === projectId)
-    if (!project) return null
-
-    const isMember = project.studentParticipants.some((sp) => {
-      if (sp.studentId.toLowerCase() === studentId.toLowerCase()) return true
-      if (studentEmail && sp.studentEmail.toLowerCase() === studentEmail.toLowerCase()) return true
-      if (studentId.toLowerCase().includes("priya") || (studentEmail && studentEmail.includes("priya"))) {
-        return sp.studentId === "stu_001"
-      }
-      return false
-    })
-
-    return isMember ? { ...project } : null
+    const proj = this.projects.find((p) => p.id === projectId)
+    if (!proj) return null
+    return JSON.parse(JSON.stringify(proj))
   }
 
   async getStudentProjects(studentId: string, studentEmail?: string): Promise<StudentProject[]> {
-    this.initData()
-    return this.projects.filter((p) =>
-      p.studentParticipants.some((sp) => {
-        if (sp.studentId.toLowerCase() === studentId.toLowerCase()) return true
-        if (studentEmail && sp.studentEmail.toLowerCase() === studentEmail.toLowerCase()) return true
-        // Default match for demo mock student
-        if (studentId.toLowerCase().includes("priya") || (studentEmail && studentEmail.includes("priya"))) {
-          return sp.studentId === "stu_001"
-        }
-        return false
-      })
+    const filtered = this.projects.filter(
+      (p) =>
+        p.studentParticipants.some((sp) => sp.studentId === studentId || (studentEmail && sp.studentEmail === studentEmail)) ||
+        (p.teamMembers && p.teamMembers.some((tm) => tm.studentId === studentId || (studentEmail && tm.email === studentEmail))) ||
+        studentId === "stu_001" // Demo active student
     )
+    return JSON.parse(JSON.stringify(filtered))
   }
 
-  async getProjectsForUniversity(universityId: string, universityName?: string): Promise<StudentProject[]> {
-    this.initData()
-    return this.projects.filter(
-      (p) =>
-        p.universityId.toLowerCase() === universityId.toLowerCase() ||
-        (universityName && p.universityName.toLowerCase().includes(universityName.toLowerCase())) ||
-        (universityName && universityName.toLowerCase().includes("mesra") && p.universityName.includes("Mesra"))
-    )
+  async getProjectForStudent(projectId: string, studentId: string, studentEmail?: string): Promise<StudentProject | null> {
+    const proj = await this.getProjectById(projectId)
+    if (!proj) return null
+
+    const isMember =
+      proj.studentParticipants.some(
+        (sp) => sp.studentId.toLowerCase() === studentId.toLowerCase() ||
+                (studentEmail && sp.studentEmail.toLowerCase() === studentEmail.toLowerCase())
+      ) ||
+      (proj.teamMembers && proj.teamMembers.some(
+        (tm) => tm.studentId.toLowerCase() === studentId.toLowerCase() ||
+                (studentEmail && tm.email.toLowerCase() === studentEmail.toLowerCase())
+      )) ||
+      studentId === "stu_001"
+
+    if (!isMember) return null
+    return proj
   }
 
-  async getProjectsForMentor(mentorId: string, mentorName?: string): Promise<StudentProject[]> {
-    this.initData()
-    return this.projects.filter(
-      (p) =>
-        p.facultyMentor.id.toLowerCase() === mentorId.toLowerCase() ||
-        (mentorName && p.facultyMentor.name.toLowerCase().includes(mentorName.toLowerCase())) ||
-        (mentorName && mentorName.toLowerCase().includes("ananya") && p.facultyMentor.name.includes("Ananya"))
-    )
+  async getProjectsByUniversity(universityId: string): Promise<StudentProject[]> {
+    const filtered = this.projects.filter((p) => p.universityId === universityId)
+    return JSON.parse(JSON.stringify(filtered))
+  }
+
+  async getProjectsByMentor(mentorId: string): Promise<StudentProject[]> {
+    const filtered = this.projects.filter((p) => p.facultyMentor.id === mentorId)
+    return JSON.parse(JSON.stringify(filtered))
+  }
+
+  async getProjectTeam(projectId: string): Promise<StudentTeamMember[]> {
+    const proj = this.projects.find((p) => p.id === projectId)
+    if (!proj) return []
+    if (proj.teamMembers && proj.teamMembers.length > 0) {
+      return JSON.parse(JSON.stringify(proj.teamMembers))
+    }
+    return proj.studentParticipants.map((sp) => ({
+      studentId: sp.studentId,
+      name: sp.name,
+      email: sp.studentEmail,
+      role: sp.role,
+      joinedAt: sp.joinedAt,
+      contributionCount: 12,
+      isTeamLead: sp.participationStatus === "lead",
+      department: sp.department,
+      publicProfileId: sp.publicProfileId,
+    }))
   }
 
   async getProjectMilestones(projectId: string): Promise<ProjectMilestone[]> {
-    const project = await this.getProjectById(projectId)
-    return project ? project.milestones : []
+    const proj = this.projects.find((p) => p.id === projectId)
+    if (!proj) return []
+    return JSON.parse(JSON.stringify(proj.milestones))
+  }
+
+  async getProjectTasks(projectId: string): Promise<ProjectTask[]> {
+    const proj = this.projects.find((p) => p.id === projectId)
+    if (!proj) return []
+    return JSON.parse(JSON.stringify(proj.tasks || []))
   }
 
   async getProjectDocuments(projectId: string): Promise<ProjectDocument[]> {
-    const project = await this.getProjectById(projectId)
-    return project ? project.documents : []
+    const proj = this.projects.find((p) => p.id === projectId)
+    if (!proj) return []
+    return JSON.parse(JSON.stringify(proj.documents))
   }
 
-  async getProjectActivity(projectId: string): Promise<ProjectActivityItem[]> {
-    const project = await this.getProjectById(projectId)
-    return project ? project.activityTimeline : []
+  async getProjectActivity(projectId: string): Promise<ProjectActivityEvent[]> {
+    const proj = this.projects.find((p) => p.id === projectId)
+    if (!proj) return []
+    return JSON.parse(JSON.stringify(proj.activity))
   }
 
-  async submitMilestone(
-    projectId: string,
-    payload: SubmitMilestonePayload,
-    actorName: string = "Student Lead"
-  ): Promise<ProjectMilestone | null> {
-    this.initData()
-    const project = this.projects.find((p) => p.id === projectId)
-    if (!project) return null
+  // --- TASK MANAGEMENT METHODS ---
 
-    const milestoneIndex = project.milestones.findIndex((m) => m.id === payload.milestoneId)
-    if (milestoneIndex === -1) return null
+  async addProjectTask(projectId: string, payload: CreateProjectTaskPayload): Promise<ProjectTask> {
+    const projIndex = this.projects.findIndex((p) => p.id === projectId)
+    if (projIndex === -1) throw new Error("Project not found")
 
-    const milestone = project.milestones[milestoneIndex]
-    const now = new Date().toISOString()
+    const newTask: ProjectTask = {
+      id: `task_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`,
+      projectId,
+      title: payload.title,
+      description: payload.description,
+      assignedStudentId: payload.assignedStudentId,
+      assignedStudentName: payload.assignedStudentName,
+      priority: payload.priority,
+      status: "todo",
+      dueDate: payload.dueDate,
+      createdAt: new Date().toISOString().split("T")[0],
+    }
 
-    const newAttachments = payload.attachments.map((att, i) => ({
-      id: "att_" + Date.now() + "_" + i,
-      name: att.name,
-      fileSize: att.fileSize,
-      fileType: att.fileType,
-      uploadedAt: now,
-      uploadedBy: actorName,
-    }))
+    if (!this.projects[projIndex].tasks) {
+      this.projects[projIndex].tasks = []
+    }
+    this.projects[projIndex].tasks!.unshift(newTask)
+
+    // Log Activity Event
+    this.projects[projIndex].activity.unshift({
+      id: `act_${Date.now()}`,
+      projectId,
+      timestamp: new Date().toISOString(),
+      actorId: payload.assignedStudentId,
+      actorName: payload.assignedStudentName,
+      actorRole: "student",
+      action: `Added Task: ${payload.title}`,
+      details: `Assigned to ${payload.assignedStudentName} with ${payload.priority.toUpperCase()} priority.`,
+    })
+
+    this.saveState()
+    return JSON.parse(JSON.stringify(newTask))
+  }
+
+  async updateProjectTask(projectId: string, taskId: string, payload: UpdateProjectTaskPayload): Promise<boolean> {
+    const projIndex = this.projects.findIndex((p) => p.id === projectId)
+    if (projIndex === -1) return false
+
+    const tasks = this.projects[projIndex].tasks || []
+    const taskIndex = tasks.findIndex((t) => t.id === taskId)
+    if (taskIndex === -1) return false
+
+    tasks[taskIndex] = {
+      ...tasks[taskIndex],
+      ...payload,
+      completedAt: payload.status === "completed" ? new Date().toISOString().split("T")[0] : undefined,
+    }
+
+    this.saveState()
+    return true
+  }
+
+  async updateTaskStatus(projectId: string, taskId: string, status: TaskStatus): Promise<boolean> {
+    const projIndex = this.projects.findIndex((p) => p.id === projectId)
+    if (projIndex === -1) return false
+
+    const tasks = this.projects[projIndex].tasks || []
+    const task = tasks.find((t) => t.id === taskId)
+    if (!task) return false
+
+    task.status = status
+    if (status === "completed") {
+      task.completedAt = new Date().toISOString().split("T")[0]
+    } else {
+      task.completedAt = undefined
+    }
+
+    this.saveState()
+    return true
+  }
+
+  // --- MILESTONE SUBMISSION & MENTOR REVIEW METHODS ---
+
+  async submitMilestone(projectId: string, payload: MilestoneSubmissionPayload): Promise<boolean> {
+    const projIndex = this.projects.findIndex((p) => p.id === projectId)
+    if (projIndex === -1) return false
+
+    const milestone = this.projects[projIndex].milestones.find((m) => m.id === payload.milestoneId)
+    if (!milestone) return false
 
     milestone.status = "under_review"
     milestone.reviewStatus = "pending"
-    milestone.submissionDate = now.split("T")[0]
+    milestone.submissionDate = new Date().toISOString().split("T")[0]
+    milestone.studentComments = payload.studentComments
     milestone.technicalUpdate = payload.technicalUpdate
     milestone.workCompleted = payload.workCompleted
     milestone.problemsEncountered = payload.problemsEncountered
     milestone.nextSteps = payload.nextSteps
-    milestone.studentComments = payload.studentComments
-    milestone.attachments = [...milestone.attachments, ...newAttachments]
 
-    project.status = "awaiting_review"
-    project.updatedAt = now
-
-    // Add activity log
-    const activityItem: ProjectActivityItem = {
-      id: "act_" + Date.now(),
-      projectId,
-      title: "Milestone Submitted for Mentor Review",
-      description: `${actorName} submitted "${milestone.title}" with ${newAttachments.length} attachments.`,
-      timestamp: now,
-      type: "milestone_submitted",
-      actorName,
-      actorRole: "Student Participant",
+    if (payload.attachments && payload.attachments.length > 0) {
+      payload.attachments.forEach((att) => {
+        milestone.attachments.push({
+          id: `att_${Date.now()}_${Math.random().toString(36).substring(2, 5)}`,
+          name: att.name,
+          fileSize: att.fileSize,
+          fileType: att.fileType,
+          uploadedAt: new Date().toISOString().split("T")[0],
+          uploadedBy: payload.submittedByStudentName,
+        })
+      })
     }
-    project.activityTimeline.unshift(activityItem)
 
-    // Add document entries if any
-    newAttachments.forEach((att) => {
-      const doc: ProjectDocument = {
-        id: "doc_" + Date.now() + "_" + att.id,
-        projectId,
-        name: att.name,
-        type: "milestone_evidence",
-        fileType: att.fileType.includes("pdf") ? "PDF" : att.fileType.includes("sheet") ? "XLSX" : "DOC",
-        fileSize: att.fileSize,
-        uploadedBy: actorName,
-        uploadedAt: now.split("T")[0],
-        accessLevel: "team_only",
-      }
-      project.documents.unshift(doc)
+    this.projects[projIndex].status = "awaiting_mentor_review"
+
+    // Log Activity Event
+    this.projects[projIndex].activity.unshift({
+      id: `act_${Date.now()}`,
+      projectId,
+      timestamp: new Date().toISOString(),
+      actorId: payload.submittedByStudentId,
+      actorName: payload.submittedByStudentName,
+      actorRole: "student",
+      action: `Submitted Milestone for Review: ${milestone.title}`,
+      details: payload.studentComments,
+      milestoneId: milestone.id,
     })
 
-    this.save()
-    return { ...milestone }
+    this.saveState()
+    return true
   }
 
-  async reviewMilestone(
-    projectId: string,
-    payload: ReviewMilestonePayload
-  ): Promise<ProjectMilestone | null> {
-    this.initData()
-    const project = this.projects.find((p) => p.id === projectId)
-    if (!project) return null
+  async reviewMilestone(payload: MentorReviewSubmissionPayload): Promise<boolean> {
+    const projIndex = this.projects.findIndex((p) => p.id === payload.projectId)
+    if (projIndex === -1) return false
 
-    const milestoneIndex = project.milestones.findIndex((m) => m.id === payload.milestoneId)
-    if (milestoneIndex === -1) return null
+    const milestone = this.projects[projIndex].milestones.find((m) => m.id === payload.milestoneId)
+    if (!milestone) return false
 
-    const milestone = project.milestones[milestoneIndex]
     const now = new Date().toISOString()
+    const nowDate = now.split("T")[0]
 
-    if (payload.decision === "approve") {
+    milestone.reviewDate = nowDate
+    milestone.mentorFeedback = payload.feedback
+
+    if (payload.action === "approve") {
       milestone.status = "approved"
       milestone.reviewStatus = "approved"
-      milestone.reviewDate = now.split("T")[0]
-      milestone.completionDate = now.split("T")[0]
-      milestone.mentorFeedback = payload.mentorFeedback
+      milestone.completionDate = nowDate
 
-      // Recalculate progress
-      const approvedCount = project.milestones.filter((m) => m.status === "approved" || m.status === "completed").length
-      const totalCount = project.milestones.length
-      project.progressPercentage = Math.min(100, Math.round((approvedCount / totalCount) * 100))
+      // Calculate total progress
+      const completedProgress = this.projects[projIndex].milestones
+        .filter((m) => m.status === "approved" || m.status === "completed")
+        .reduce((sum, m) => sum + m.progressContribution, 0)
 
-      // Check if all milestones approved
-      if (approvedCount === totalCount) {
-        project.status = "approved"
-        project.projectStage = "impact_verified"
+      this.projects[projIndex].progressPercentage = Math.min(100, Math.max(completedProgress, this.projects[projIndex].progressPercentage + 15))
+
+      // Advance stage if prototype or pilot is approved
+      if (milestone.stage === "prototype") {
+        this.projects[projIndex].projectStage = "pilot"
+      } else if (milestone.stage === "pilot") {
+        this.projects[projIndex].projectStage = "deployed"
+      } else if (milestone.stage === "impact_verified") {
+        this.projects[projIndex].projectStage = "completed"
+        this.projects[projIndex].status = "completed"
       } else {
-        project.status = "active"
+        this.projects[projIndex].status = "active"
       }
 
-      // Add feedback item
-      project.mentorFeedback.unshift({
-        id: "mf_" + Date.now(),
-        projectId,
-        milestoneId: milestone.id,
-        milestoneTitle: milestone.title,
-        mentorName: payload.mentorName,
-        mentorId: payload.mentorId,
-        feedback: payload.mentorFeedback,
-        action: "approved",
-        date: now.split("T")[0],
-        resolutionStatus: "resolved",
-      })
-
-      // Add activity
-      project.activityTimeline.unshift({
-        id: "act_" + Date.now(),
-        projectId,
-        title: `Milestone "${milestone.title}" Approved`,
-        description: `${payload.mentorName} approved milestone. Project progress updated to ${project.progressPercentage}%.`,
+      this.projects[projIndex].activity.unshift({
+        id: `act_${Date.now()}`,
+        projectId: payload.projectId,
         timestamp: now,
-        type: "milestone_approved",
+        actorId: payload.mentorId,
         actorName: payload.mentorName,
-        actorRole: "Faculty Mentor",
+        actorRole: "mentor",
+        action: `Approved Milestone: ${milestone.title}`,
+        details: payload.feedback,
+        milestoneId: milestone.id,
       })
     } else {
       milestone.status = "changes_requested"
       milestone.reviewStatus = "changes_requested"
-      milestone.reviewDate = now.split("T")[0]
-      milestone.mentorFeedback = payload.mentorFeedback
-      project.status = "changes_requested"
+      this.projects[projIndex].status = "changes_requested"
 
-      // Add feedback item
-      project.mentorFeedback.unshift({
-        id: "mf_" + Date.now(),
-        projectId,
-        milestoneId: milestone.id,
-        milestoneTitle: milestone.title,
-        mentorName: payload.mentorName,
-        mentorId: payload.mentorId,
-        feedback: payload.mentorFeedback,
-        action: "changes_requested",
-        date: now.split("T")[0],
-        resolutionStatus: "pending_action",
-      })
-
-      // Add activity
-      project.activityTimeline.unshift({
-        id: "act_" + Date.now(),
-        projectId,
-        title: `Changes Requested on "${milestone.title}"`,
-        description: `${payload.mentorName}: "${payload.mentorFeedback}"`,
+      this.projects[projIndex].activity.unshift({
+        id: `act_${Date.now()}`,
+        projectId: payload.projectId,
         timestamp: now,
-        type: "changes_requested",
+        actorId: payload.mentorId,
         actorName: payload.mentorName,
-        actorRole: "Faculty Mentor",
+        actorRole: "mentor",
+        action: `Requested Changes on Milestone: ${milestone.title}`,
+        details: payload.feedback,
+        milestoneId: milestone.id,
       })
     }
 
-    project.updatedAt = now
-    this.save()
-    return { ...milestone }
+    // Add Mentor Feedback record
+    this.projects[projIndex].mentorFeedback.unshift({
+      id: `fb_${Date.now()}`,
+      milestoneId: milestone.id,
+      milestoneTitle: milestone.title,
+      mentorName: payload.mentorName,
+      createdAt: now,
+      feedback: payload.feedback,
+      status: payload.action === "approve" ? "approved" : "changes_requested",
+    })
+
+    this.saveState()
+    return true
   }
+
+  // --- DOCUMENT MANAGEMENT ---
 
   async addProjectDocument(
     projectId: string,
-    payload: AddProjectDocumentPayload
-  ): Promise<ProjectDocument | null> {
-    this.initData()
-    const project = this.projects.find((p) => p.id === projectId)
-    if (!project) return null
+    payload: {
+      name: string
+      category: ProjectDocument["category"]
+      accessLevel: ProjectDocument["accessLevel"]
+      uploadedBy: string
+      uploadedByName: string
+      uploadedByRole: string
+      fileSize: string
+      fileType: string
+      description?: string
+    }
+  ): Promise<ProjectDocument> {
+    const projIndex = this.projects.findIndex((p) => p.id === projectId)
+    if (projIndex === -1) throw new Error("Project not found")
 
-    const now = new Date().toISOString()
-    const doc: ProjectDocument = {
-      id: "doc_" + Date.now(),
+    const newDoc: ProjectDocument = {
+      id: `doc_${Date.now()}`,
       projectId,
       name: payload.name,
-      type: payload.type,
-      fileType: payload.fileType,
-      fileSize: payload.fileSize,
-      uploadedBy: payload.uploadedBy,
-      uploadedAt: now.split("T")[0],
+      category: payload.category,
       accessLevel: payload.accessLevel,
+      uploadedBy: payload.uploadedBy,
+      uploadedByName: payload.uploadedByName,
+      uploadedByRole: payload.uploadedByRole,
+      uploadedAt: new Date().toISOString().split("T")[0],
+      fileSize: payload.fileSize,
+      fileType: payload.fileType,
+      description: payload.description,
+      downloadUrl: "#",
     }
 
-    project.documents.unshift(doc)
-    project.activityTimeline.unshift({
-      id: "act_" + Date.now(),
+    this.projects[projIndex].documents.unshift(newDoc)
+
+    this.projects[projIndex].activity.unshift({
+      id: `act_${Date.now()}`,
       projectId,
-      title: "Document Uploaded",
-      description: `${payload.uploadedBy} uploaded "${payload.name}" (${payload.fileSize}).`,
-      timestamp: now,
-      type: "document_uploaded",
-      actorName: payload.uploadedBy,
-      actorRole: "Participant",
+      timestamp: new Date().toISOString(),
+      actorId: payload.uploadedBy,
+      actorName: payload.uploadedByName,
+      actorRole: "student",
+      action: `Uploaded Project Document: ${payload.name}`,
+      details: payload.description,
+      documentId: newDoc.id,
     })
 
-    project.updatedAt = now
-    this.save()
-    return doc
+    this.saveState()
+    return JSON.parse(JSON.stringify(newDoc))
   }
 }
 
-export const projectService = new MockProjectService()
+export const projectService = new ProjectService()

@@ -33,8 +33,8 @@ export function MentorFeedback({ project }: MentorFeedbackProps) {
       ) : (
         <div className="space-y-4">
           {project.mentorFeedback.map((fb) => {
-            const isApproved = fb.action === "approved"
-            const isChangesRequested = fb.action === "changes_requested"
+            const isApproved = fb.status === "approved"
+            const isChangesRequested = fb.status === "changes_requested"
 
             return (
               <div
@@ -74,7 +74,13 @@ export function MentorFeedback({ project }: MentorFeedbackProps) {
                         General Comment
                       </Badge>
                     )}
-                    <span className="text-[10px] text-muted-foreground font-mono">{fb.date}</span>
+                    <span className="text-[10px] text-muted-foreground font-mono">
+                      {new Date(fb.createdAt).toLocaleDateString("en-IN", {
+                        day: "numeric",
+                        month: "short",
+                        year: "numeric",
+                      })}
+                    </span>
                   </div>
                 </div>
 
@@ -83,8 +89,8 @@ export function MentorFeedback({ project }: MentorFeedbackProps) {
                 </div>
 
                 <div className="flex items-center justify-between text-[11px] text-muted-foreground pt-1">
-                  <span>Resolution State: <strong className="capitalize text-foreground">{fb.resolutionStatus.replace("_", " ")}</strong></span>
-                  <span className="text-[10px]">Faculty Mentor Sign-Off</span>
+                  <span>Sign-off: <strong className="capitalize text-foreground">{fb.status.replace("_", " ")}</strong></span>
+                  <span className="text-[10px]">Faculty Mentor Review</span>
                 </div>
               </div>
             )

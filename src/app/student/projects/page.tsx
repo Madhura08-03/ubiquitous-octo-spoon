@@ -1,6 +1,7 @@
 "use client"
 
 import * as React from "react"
+import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { FolderGit2, Search, Sparkles } from "lucide-react"
 
@@ -34,9 +35,8 @@ export default function StudentProjectsPage() {
     }
 
     const studentId = user.id || "stu_001"
-    const studentEmail = user.email || "priya.sharma@student.bitmesra.ac.in"
 
-    projectService.getStudentProjects(studentId, studentEmail)
+    projectService.getStudentProjects(studentId)
       .then((userProjects) => {
         if (isMounted) {
           setProjects(userProjects)
@@ -51,7 +51,7 @@ export default function StudentProjectsPage() {
       })
 
     const unsubscribe = projectService.subscribe(() => {
-      projectService.getStudentProjects(studentId, studentEmail).then((p) => {
+      projectService.getStudentProjects(studentId).then((p) => {
         if (isMounted) setProjects(p)
       })
     })
@@ -68,9 +68,15 @@ export default function StudentProjectsPage() {
       p.problemTitle.toLowerCase().includes(searchQuery.toLowerCase()) ||
       p.facultyMentor.name.toLowerCase().includes(searchQuery.toLowerCase())
 
-    if (filterTab === "active") return matchesSearch && (p.status === "active" || p.status === "awaiting_review")
-    if (filterTab === "awaiting_review") return matchesSearch && (p.status === "awaiting_review" || p.status === "changes_requested")
-    if (filterTab === "completed") return matchesSearch && (p.status === "completed" || p.projectStage === "impact_verified")
+    if (filterTab === "active") {
+      return matchesSearch && (p.status === "active" || p.status === "awaiting_mentor_review" || p.status === "awaiting_review")
+    }
+    if (filterTab === "awaiting_review") {
+      return matchesSearch && (p.status === "awaiting_mentor_review" || p.status === "awaiting_review" || p.status === "changes_requested")
+    }
+    if (filterTab === "completed") {
+      return matchesSearch && (p.status === "completed" || p.projectStage === "impact_verified")
+    }
     return matchesSearch
   })
 
@@ -93,51 +99,44 @@ export default function StudentProjectsPage() {
           <div className="space-y-1">
             <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-foreground flex items-center gap-2.5">
               <FolderGit2 className="size-7 text-primary" />
-              <span>My Innovation Projects</span>
+              <span>My Projects</span>
             </h1>
             <p className="text-xs sm:text-sm text-muted-foreground">
-              Track your active capstone research, milestone deliverables, faculty guidance, and CSR sponsorships.
+              Track your university solution projects, milestones, team progress, and mentor reviews.
             </p>
           </div>
 
-          <Button
-            onClick={() => router.push("/feed")}
-            className="text-xs font-bold gap-1.5 bg-primary text-primary-foreground hover:bg-primary/90 self-start sm:self-auto shadow-xs"
-          >
-            <Sparkles className="size-3.5" />
-            <span>Discover Open Challenges</span>
-          </Button>
+          <Link href="/feed">
+            <Button
+              size="sm"
+              className="text-xs font-bold gap-1.5 bg-primary text-primary-foreground shadow-xs shrink-0"
+            >
+              <Sparkles className="size-3.5" />
+              <span>Explore Open Challenges</span>
+            </Button>
+          </Link>
         </div>
 
-        {/* Top Summary Statistics */}
-        <StudentContributionSummary projects={projects} studentId={currentUser?.id || "stu_001"} />
+        {/* Top 5 Statistics Cards */}
+        <StudentContributionSummary projects={projects} studentId={currentUser?.id} />
 
-        {/* Search & Filter Tabs */}
-        <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 pt-2">
-          <div className="relative flex-1 max-w-md">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-3.5 text-muted-foreground" />
-            <Input
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Search projects by title, challenge, or faculty mentor..."
-              className="pl-8 text-xs h-9"
-            />
-          </div>
-
-          <div className="flex flex-wrap gap-1 p-1 bg-muted/40 rounded-xl border border-border">
+        {/* Filter and Search Bar */}
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pt-2">
+          {/* Tabs */}
+          <div className="flex items-center gap-1 bg-muted/40 p-1 rounded-xl w-max border border-border">
             {[
               { id: "all", label: `All (${projects.length})` },
               { id: "active", label: "Active" },
-              { id: "awaiting_review", label: "Under Review" },
+              { id: "awaiting_review", label: "Awaiting Review" },
               { id: "completed", label: "Completed" },
             ].map((tab) => (
               <button
                 key={tab.id}
                 type="button"
                 onClick={() => setFilterTab(tab.id as typeof filterTab)}
-                className={`text-xs px-3 py-1.5 rounded-lg transition-all ${
+                className={`text-xs font-bold px-3 py-1.5 rounded-lg transition-colors ${
                   filterTab === tab.id
-                    ? "bg-card text-foreground font-bold shadow-xs border border-border"
+                    ? "bg-card text-foreground shadow-xs border border-border"
                     : "text-muted-foreground hover:text-foreground"
                 }`}
               >
@@ -145,36 +144,45 @@ export default function StudentProjectsPage() {
               </button>
             ))}
           </div>
+
+          {/* Search Input */}
+          <div className="relative w-full sm:w-72">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-3.5 text-muted-foreground" />
+            <Input
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder="Search projects, problems, mentors..."
+              className="pl-8 text-xs h-9"
+            />
+          </div>
         </div>
 
         {/* Projects Grid */}
         {isLoading ? (
-          <div className="flex flex-col items-center justify-center min-h-[300px] space-y-3">
-            <div className="size-8 animate-spin rounded-full border-3 border-primary border-t-transparent" />
-            <p className="text-xs text-muted-foreground">Loading your project workspaces...</p>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {[1, 2, 3].map((i) => (
+              <div
+                key={i}
+                className="h-64 rounded-2xl border border-border bg-card/40 animate-pulse"
+              />
+            ))}
           </div>
         ) : filteredProjects.length === 0 ? (
-          <div className="pt-6 max-w-md mx-auto">
-            <EmptyState
-              icon={FolderGit2}
-              title="No Innovation Projects Found"
-              description={
-                searchQuery
-                  ? "No projects match your current search keywords."
-                  : "You are not currently participating in any active innovation projects. Explore public challenges to propose solutions with your university."
-              }
-              actionLabel="Explore Open Challenges"
-              onAction={() => router.push("/feed")}
-            />
-          </div>
+          <EmptyState
+            icon={FolderGit2}
+            title="No projects found"
+            description={
+              searchQuery
+                ? "No innovation projects match your current search criteria."
+                : "You have not been assigned to any university solution project teams yet. Discover open societal challenges and collaborate with your university faculty."
+            }
+            actionLabel="Explore Open Challenges"
+            onAction={() => router.push("/feed")}
+          />
         ) : (
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {filteredProjects.map((project) => (
-              <StudentProjectCard
-                key={project.id}
-                project={project}
-                currentStudentId={currentUser?.id || "stu_001"}
-              />
+              <StudentProjectCard key={project.id} project={project} />
             ))}
           </div>
         )}

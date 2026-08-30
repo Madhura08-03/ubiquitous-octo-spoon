@@ -7,13 +7,14 @@ import {
   Upload,
   Lock,
   Search,
+  ShieldCheck,
 } from "lucide-react"
 import { toast } from "sonner"
 
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
-import { StudentProject, ProjectDocument } from "@/services/projects/project-types"
+import { StudentProject, ProjectDocument, DocumentCategory } from "@/services/projects/project-types"
 import { projectService } from "@/services/projects/project-service"
 
 export interface ProjectDocumentsProps {
@@ -41,13 +42,15 @@ export function ProjectDocuments({
     setIsUploading(true)
     try {
       await projectService.addProjectDocument(project.id, {
-        projectId: project.id,
-        name: `Firmware_Telemetry_Log_${Date.now().toString().slice(-4)}.pdf`,
-        type: "prototype_report",
-        fileType: "PDF",
+        name: `Firmware_Telemetry_Calibration_Log_${Date.now().toString().slice(-4)}.pdf`,
+        category: "prototype_report" as DocumentCategory,
+        accessLevel: "team",
+        uploadedBy: "stu_001",
+        uploadedByName: currentUserName,
+        uploadedByRole: "Team Lead",
         fileSize: "2.4 MB",
-        uploadedBy: currentUserName,
-        accessLevel: "team_only",
+        fileType: "application/pdf",
+        description: "Prototype telemetry calibration data and sensor precision benchmarking log.",
       })
       toast.success("Document Uploaded", {
         description: "New report has been added to project repository.",
@@ -63,8 +66,8 @@ export function ProjectDocuments({
   const filteredDocs = project.documents.filter((doc) => {
     const matchesSearch =
       doc.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      doc.uploadedBy.toLowerCase().includes(searchQuery.toLowerCase())
-    const matchesCat = selectedCategory === "all" || doc.type === selectedCategory
+      (doc.uploadedByName || doc.uploadedBy).toLowerCase().includes(searchQuery.toLowerCase())
+    const matchesCat = selectedCategory === "all" || doc.category === selectedCategory
     return matchesSearch && matchesCat
   })
 
@@ -109,6 +112,7 @@ export function ProjectDocuments({
             { id: "solution_proposal", label: "Proposals" },
             { id: "design_documents", label: "CAD / Design" },
             { id: "prototype_report", label: "Prototypes" },
+            { id: "testing_data", label: "Testing Data" },
             { id: "milestone_evidence", label: "Evidence" },
           ].map((cat) => (
             <button
@@ -147,18 +151,23 @@ export function ProjectDocuments({
                 <div className="space-y-0.5 min-w-0">
                   <h4 className="font-bold text-foreground truncate">{doc.name}</h4>
                   <div className="flex flex-wrap items-center gap-2 text-[11px] text-muted-foreground">
-                    <span>Uploaded by: <strong>{doc.uploadedBy}</strong></span>
+                    <span>Uploaded by: <strong>{doc.uploadedByName || doc.uploadedBy}</strong></span>
                     <span>&bull;</span>
                     <span>{doc.uploadedAt}</span>
                     <span>&bull;</span>
                     <span className="font-mono">{doc.fileSize}</span>
+                    <span>&bull;</span>
+                    <span className="capitalize text-primary flex items-center gap-0.5">
+                      <ShieldCheck className="size-3 text-primary" />
+                      <span>{doc.accessLevel.replace("_", " ")} Access</span>
+                    </span>
                   </div>
                 </div>
               </div>
 
               <div className="flex items-center gap-2 self-end sm:self-center">
                 <Badge variant="secondary" className="text-[10px] uppercase font-bold">
-                  {doc.type.replace("_", " ")}
+                  {doc.category.replace("_", " ")}
                 </Badge>
                 <Button
                   type="button"

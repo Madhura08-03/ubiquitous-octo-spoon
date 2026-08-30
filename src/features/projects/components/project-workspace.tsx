@@ -11,6 +11,10 @@ import {
   MessageSquareQuote,
   ArrowLeft,
   ShieldCheck,
+  CheckSquare,
+  Clock,
+  AlertTriangle,
+  GraduationCap,
 } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
@@ -20,6 +24,7 @@ import { StudentProject } from "@/services/projects/project-types"
 import { ProjectOverview } from "./project-overview"
 import { ProjectTeam } from "./project-team"
 import { ProjectMilestones } from "./project-milestones"
+import { ProjectTaskBoard } from "./project-task-board"
 import { ProjectDocuments } from "./project-documents"
 import { ProjectActivityTimeline } from "./project-activity-timeline"
 import { MentorFeedback } from "./mentor-feedback"
@@ -48,10 +53,45 @@ export function ProjectWorkspace({
     (m) => m.status === "changes_requested"
   ).length
 
+  const tasksCount = project.tasks?.length || 0
+
+  const getStatusBadge = () => {
+    switch (project.status) {
+      case "awaiting_mentor_review":
+      case "awaiting_review":
+        return (
+          <Badge variant="outline" className="border-amber-500/50 text-amber-800 dark:text-amber-300 font-mono text-[10px] font-bold gap-1 bg-amber-500/10">
+            <Clock className="size-3 text-amber-500" />
+            <span>AWAITING MENTOR REVIEW</span>
+          </Badge>
+        )
+      case "changes_requested":
+        return (
+          <Badge variant="outline" className="border-rose-500/50 text-rose-800 dark:text-rose-300 font-mono text-[10px] font-bold gap-1 bg-rose-500/10">
+            <AlertTriangle className="size-3 text-rose-500" />
+            <span>CHANGES REQUESTED</span>
+          </Badge>
+        )
+      case "completed":
+        return (
+          <Badge variant="outline" className="border-emerald-500/50 text-emerald-800 dark:text-emerald-300 font-mono text-[10px] font-bold gap-1 bg-emerald-500/10">
+            <ShieldCheck className="size-3 text-emerald-500" />
+            <span>COMPLETED</span>
+          </Badge>
+        )
+      default:
+        return (
+          <Badge variant="outline" className="border-primary/50 text-primary font-mono text-[10px] font-bold bg-primary/10">
+            ACTIVE WORKSPACE
+          </Badge>
+        )
+    }
+  }
+
   return (
     <div className="space-y-6 text-left max-w-7xl mx-auto w-full">
       {/* Top Header Card */}
-      <div className="rounded-3xl border border-border bg-card p-6 sm:p-8 space-y-4 shadow-sm relative overflow-hidden">
+      <div className="rounded-3xl border border-border bg-card p-6 sm:p-8 space-y-5 shadow-xs relative overflow-hidden">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <Button
             variant="outline"
@@ -64,6 +104,7 @@ export function ProjectWorkspace({
           </Button>
 
           <div className="flex items-center gap-2 flex-wrap">
+            {getStatusBadge()}
             <Badge variant="outline" className="text-xs font-bold border-primary/30 text-primary">
               {project.domain}
             </Badge>
@@ -71,7 +112,7 @@ export function ProjectWorkspace({
               {project.projectStage} Stage
             </Badge>
             {project.sponsorshipStatus === "sponsored" && (
-              <Badge variant="outline" className="border-emerald-500/30 text-emerald-600 bg-emerald-500/10 text-xs font-bold gap-1">
+              <Badge variant="outline" className="border-emerald-500/40 text-emerald-700 dark:text-emerald-300 text-xs font-bold gap-1">
                 <ShieldCheck className="size-3" />
                 <span>Sponsored</span>
               </Badge>
@@ -88,19 +129,52 @@ export function ProjectWorkspace({
           </p>
         </div>
 
-        {/* Quick Meta Strip */}
-        <div className="pt-2 border-t border-border flex flex-wrap items-center justify-between gap-4 text-xs">
-          <div className="flex flex-wrap items-center gap-4 text-muted-foreground">
-            <span>Faculty Mentor: <strong className="text-foreground">{project.facultyMentor.name}</strong></span>
-            <span>&bull;</span>
-            <span>Team: <strong className="text-foreground">{project.studentParticipants.length} Researchers</strong></span>
-            <span>&bull;</span>
-            <span>District: <strong className="text-foreground">{project.district}</strong></span>
+        {/* Top Collaboration Summary Strip */}
+        <div className="pt-3 border-t border-border grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 text-xs">
+          <div className="space-y-0.5">
+            <span className="text-[10px] text-muted-foreground uppercase font-bold block">Current Stage</span>
+            <p className="font-bold text-foreground capitalize flex items-center gap-1">
+              <Layers className="size-3 text-primary" />
+              <span>{project.projectStage}</span>
+            </p>
           </div>
 
-          <div className="flex items-center gap-2">
-            <span className="font-medium text-muted-foreground">Progress:</span>
-            <span className="font-mono font-bold text-primary text-sm">{project.progressPercentage}%</span>
+          <div className="space-y-0.5">
+            <span className="text-[10px] text-muted-foreground uppercase font-bold block">Progress</span>
+            <p className="font-mono font-bold text-primary text-sm">
+              {project.progressPercentage}%
+            </p>
+          </div>
+
+          <div className="space-y-0.5">
+            <span className="text-[10px] text-muted-foreground uppercase font-bold block">Faculty Mentor</span>
+            <p className="font-semibold text-foreground truncate flex items-center gap-1">
+              <GraduationCap className="size-3 text-primary shrink-0" />
+              <span className="truncate">{project.facultyMentor.name}</span>
+            </p>
+          </div>
+
+          <div className="space-y-0.5">
+            <span className="text-[10px] text-muted-foreground uppercase font-bold block">Team Size</span>
+            <p className="font-semibold text-foreground flex items-center gap-1">
+              <Users className="size-3 text-primary" />
+              <span>{project.studentParticipants.length} Students</span>
+            </p>
+          </div>
+
+          <div className="space-y-0.5">
+            <span className="text-[10px] text-muted-foreground uppercase font-bold block">Pending Reviews</span>
+            <p className="font-semibold text-foreground flex items-center gap-1">
+              <Clock className="size-3 text-amber-500" />
+              <span>{pendingMilestonesCount} Milestone</span>
+            </p>
+          </div>
+
+          <div className="space-y-0.5">
+            <span className="text-[10px] text-muted-foreground uppercase font-bold block">District</span>
+            <p className="font-semibold text-foreground truncate">
+              {project.district}
+            </p>
           </div>
         </div>
       </div>
@@ -114,6 +188,11 @@ export function ProjectWorkspace({
               <span>Overview</span>
             </TabsTrigger>
 
+            <TabsTrigger value="team" className="text-xs font-bold py-2.5 px-4 gap-1.5">
+              <Users className="size-3.5" />
+              <span>Team & Mentor</span>
+            </TabsTrigger>
+
             <TabsTrigger value="milestones" className="text-xs font-bold py-2.5 px-4 gap-1.5 relative">
               <Layers className="size-3.5" />
               <span>Milestones ({project.milestones.length})</span>
@@ -122,9 +201,9 @@ export function ProjectWorkspace({
               )}
             </TabsTrigger>
 
-            <TabsTrigger value="team" className="text-xs font-bold py-2.5 px-4 gap-1.5">
-              <Users className="size-3.5" />
-              <span>Team & Mentor</span>
+            <TabsTrigger value="tasks" className="text-xs font-bold py-2.5 px-4 gap-1.5">
+              <CheckSquare className="size-3.5" />
+              <span>Tasks ({tasksCount})</span>
             </TabsTrigger>
 
             <TabsTrigger value="documents" className="text-xs font-bold py-2.5 px-4 gap-1.5">
@@ -148,6 +227,10 @@ export function ProjectWorkspace({
           <ProjectOverview project={project} />
         </TabsContent>
 
+        <TabsContent value="team" className="mt-0">
+          <ProjectTeam project={project} />
+        </TabsContent>
+
         <TabsContent value="milestones" className="mt-0">
           <ProjectMilestones
             project={project}
@@ -157,8 +240,12 @@ export function ProjectWorkspace({
           />
         </TabsContent>
 
-        <TabsContent value="team" className="mt-0">
-          <ProjectTeam project={project} />
+        <TabsContent value="tasks" className="mt-0">
+          <ProjectTaskBoard
+            project={project}
+            onProjectUpdated={onProjectUpdated}
+            currentUserName={currentUserName}
+          />
         </TabsContent>
 
         <TabsContent value="documents" className="mt-0">

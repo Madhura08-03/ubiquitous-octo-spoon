@@ -22,7 +22,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog"
-import { ProjectMilestone, ReviewMilestonePayload } from "@/services/projects/project-types"
+import { ProjectMilestone, MentorReviewSubmissionPayload } from "@/services/projects/project-types"
 import { projectService } from "@/services/projects/project-service"
 
 export interface MilestoneReviewModalProps {
@@ -61,16 +61,16 @@ export function MilestoneReviewModal({
 
     setIsProcessing(true)
     try {
-      const payload: ReviewMilestonePayload = {
+      const payload: MentorReviewSubmissionPayload = {
         projectId,
         milestoneId: milestone.id,
-        decision,
-        mentorFeedback: feedback.trim() || (decision === "approve" ? "Milestone approved by faculty mentor." : "Changes requested."),
+        action: decision,
+        feedback: feedback.trim() || (decision === "approve" ? "Milestone approved by faculty mentor." : "Changes requested."),
         mentorName,
         mentorId,
       }
 
-      await projectService.reviewMilestone(projectId, payload)
+      await projectService.reviewMilestone(payload)
 
       if (decision === "approve") {
         toast.success("Milestone Approved", {

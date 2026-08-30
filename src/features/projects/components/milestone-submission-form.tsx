@@ -21,7 +21,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog"
-import { ProjectMilestone, SubmitMilestonePayload } from "@/services/projects/project-types"
+import { ProjectMilestone, MilestoneSubmissionPayload } from "@/services/projects/project-types"
 import { projectService } from "@/services/projects/project-service"
 
 export interface MilestoneSubmissionFormProps {
@@ -89,18 +89,20 @@ export function MilestoneSubmissionForm({
       await new Promise((r) => setTimeout(r, 400))
       setUploadProgress(100)
 
-      const payload: SubmitMilestonePayload = {
+      const payload: MilestoneSubmissionPayload = {
         projectId,
         milestoneId: milestone.id,
-        technicalUpdate: technicalUpdate.trim(),
+        studentComments: studentComments.trim() || workCompleted.trim(),
+        technicalUpdate: technicalUpdate.trim() || undefined,
         workCompleted: workCompleted.trim(),
         problemsEncountered: problemsEncountered.trim() || undefined,
         nextSteps: nextSteps.trim() || undefined,
-        studentComments: studentComments.trim() || undefined,
         attachments,
+        submittedByStudentId: "stu_001",
+        submittedByStudentName: actorName,
       }
 
-      await projectService.submitMilestone(projectId, payload, actorName)
+      await projectService.submitMilestone(projectId, payload)
 
       toast.success("Milestone Submitted for Review", {
         description: `"${milestone.title}" is now awaiting faculty mentor review.`,
