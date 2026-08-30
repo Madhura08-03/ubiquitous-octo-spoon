@@ -19,6 +19,13 @@ export function AdminLoginForm() {
   const [isLoading, setIsLoading] = React.useState(false)
   const [errorMessage, setErrorMessage] = React.useState<string | null>(null)
 
+  React.useEffect(() => {
+    const user = authService.getCurrentUser()
+    if (user && user.role === "government_admin") {
+      router.replace("/admin")
+    }
+  }, [router])
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setErrorMessage(null)
