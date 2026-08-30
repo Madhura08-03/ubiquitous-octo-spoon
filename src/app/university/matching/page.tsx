@@ -56,7 +56,7 @@ const UNIVERSITY_SIDEBAR_SECTIONS: SidebarSection[] = [
   {
     title: "Academic Capacity",
     items: [
-      { id: "mentors", label: "Faculty Mentors", href: "/university/dashboard#mentors", icon: UserCheck, badge: "4" },
+      { id: "mentors", label: "Faculty Mentors", href: "/university/mentors", icon: UserCheck, badge: "8" },
       { id: "students", label: "Student Researchers", href: "/university/dashboard#students", icon: GraduationCap, badge: "24" },
       { id: "collaborations", label: "Industry CSR", href: "/university/dashboard#collaborations", icon: Building2, badge: "3" },
     ],
