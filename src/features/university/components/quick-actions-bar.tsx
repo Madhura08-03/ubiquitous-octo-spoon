@@ -7,6 +7,7 @@ import {
   Lightbulb,
   UserCheck,
   Building2,
+  Sparkles,
 } from "lucide-react"
 
 import { buttonVariants } from "@/components/ui/button"
@@ -28,6 +29,18 @@ export function QuickActionsBar() {
       >
         <FileQuestion className="size-3.5" />
         <span>Explore Open Challenges</span>
+      </Link>
+
+      <Link
+        href="/university/matching"
+        className={buttonVariants({
+          variant: "outline",
+          size: "sm",
+          className: "text-xs font-semibold gap-1.5 border-primary/30 text-primary hover:bg-primary/10",
+        })}
+      >
+        <Sparkles className="size-3.5 text-lime-500" />
+        <span>AI Problem Matching</span>
       </Link>
 
       <a
@@ -63,7 +76,7 @@ export function QuickActionsBar() {
         })}
       >
         <Building2 className="size-3.5" />
-        <span>View Collaborations</span>
+        <span>Industry CSR</span>
       </a>
     </div>
   )
