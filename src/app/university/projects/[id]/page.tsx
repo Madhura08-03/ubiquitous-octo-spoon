@@ -25,6 +25,9 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs"
 import { StudentProject } from "@/services/projects/project-types"
 import { ImplementationStage } from "@/services/implementation/implementation-types"
 import { projectService } from "@/services/projects/project-service"
+import { industryCollaborationService } from "@/services/industry/industry-collaboration-service"
+import { IndustrySolutionInterest } from "@/services/industry/industry-collaboration-types"
+import { IndustryInterestCard } from "@/features/university/components/industry-interest-card"
 import { authService } from "@/services/auth/auth-service"
 
 import { SelectedSolutionSection } from "@/features/projects/components/selected-solution-section"
@@ -44,6 +47,7 @@ export default function UniversityProjectWorkspaceDetailPage() {
   const rawId = Array.isArray(params?.id) ? params.id[0] : params?.id
   
   const [project, setProject] = React.useState<StudentProject | null>(null)
+  const [industryInterests, setIndustryInterests] = React.useState<IndustrySolutionInterest[]>([])
   const [activeTab, setActiveTab] = React.useState("overview")
   const [isLoading, setIsLoading] = React.useState(true)
 
@@ -52,6 +56,8 @@ export default function UniversityProjectWorkspaceDetailPage() {
     try {
       const proj = await projectService.getProjectById(rawId)
       setProject(proj)
+      const interests = await industryCollaborationService.getUniversityInterests(proj?.universityId || "univ_bit_mesra")
+      setIndustryInterests(interests)
     } finally {
       setIsLoading(false)
     }
@@ -331,6 +337,24 @@ export default function UniversityProjectWorkspaceDetailPage() {
                 </div>
               </div>
             </div>
+
+            {industryInterests.length > 0 && (
+              <div className="space-y-3 pt-2 text-left">
+                <h4 className="text-sm font-bold text-foreground flex items-center gap-2">
+                  <Building2 className="size-4 text-primary" />
+                  <span>Incoming Sponsorship Inquiries for this University</span>
+                </h4>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {industryInterests.map((interest) => (
+                    <IndustryInterestCard
+                      key={interest.id}
+                      interest={interest}
+                      onReload={loadData}
+                    />
+                  ))}
+                </div>
+              </div>
+            )}
           </TabsContent>
 
           <TabsContent value="government" className="mt-0">
