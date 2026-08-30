@@ -269,6 +269,14 @@ export default function GovernmentAdminPage() {
           icon: Sparkles,
           active: activeTab === "comparison",
         },
+        {
+          id: "evaluation",
+          label: "Solution Evaluation",
+          href: "/admin/solutions",
+          icon: Award,
+          badge: 14,
+          active: false,
+        },
       ],
     },
     {
@@ -432,6 +440,7 @@ export default function GovernmentAdminPage() {
               { id: "pipeline", label: "Problem Pipeline", icon: Layers },
               { id: "solutions", label: "Solution Proposals", icon: Lightbulb },
               { id: "comparison", label: "Comparison Matrix", icon: Sparkles },
+              { id: "eval_link", label: "Solution Evaluation (14 Pending)", icon: Award, href: "/admin/solutions" },
               { id: "sponsorships", label: "CSR & Sponsorships", icon: DollarSign },
               { id: "universities", label: "Universities", icon: GraduationCap },
               { id: "talent", label: "Students & Mentors", icon: Users },
@@ -442,10 +451,20 @@ export default function GovernmentAdminPage() {
               const Icon = tab.icon
               const isActive = activeTab === tab.id
               return (
-                <button
-                  key={tab.id}
-                  type="button"
-                  onClick={() => setActiveTab(tab.id as typeof activeTab)}
+                tab.href ? (
+                  <Link
+                    key={tab.id}
+                    href={tab.href}
+                    className="text-xs font-bold px-3 py-1.5 rounded-lg transition-all flex items-center gap-1.5 bg-amber-500/10 text-amber-800 dark:text-amber-300 border border-amber-500/30 hover:bg-amber-500/20 shadow-xs"
+                  >
+                    <tab.icon className="size-3.5" />
+                    <span>{tab.label}</span>
+                  </Link>
+                ) : (
+                  <button
+                    key={tab.id}
+                    type="button"
+                    onClick={() => setActiveTab(tab.id as typeof activeTab)}
                   className={`text-xs font-semibold px-3 py-1.5 rounded-lg transition-all flex items-center gap-1.5 ${
                     isActive
                       ? "bg-primary text-primary-foreground shadow-xs font-bold"
@@ -454,7 +473,8 @@ export default function GovernmentAdminPage() {
                 >
                   <Icon className="size-3.5" />
                   <span>{tab.label}</span>
-                </button>
+                  </button>
+                )
               )
             })}
           </div>
