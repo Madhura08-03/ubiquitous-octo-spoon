@@ -21,6 +21,7 @@ import {
   Landmark,
   UserCheck,
   Building2,
+  Activity,
 } from "lucide-react"
 import { toast } from "sonner"
 
@@ -275,6 +276,14 @@ export default function GovernmentAdminPage() {
           href: "/admin/solutions",
           icon: Award,
           badge: 14,
+          active: false,
+        },
+        {
+          id: "implementation",
+          label: "Implementation Lifecycle",
+          href: "/admin/implementation",
+          icon: Activity,
+          badge: 6,
           active: false,
         },
       ],
