@@ -20,15 +20,18 @@ export type ProjectStatus =
   | "sponsored"
   | "completed"
   | "paused"
+  | "in_development"
 
 export type MilestoneStatus =
   | "not_started"
+  | "upcoming"
   | "in_progress"
   | "submitted"
   | "under_review"
   | "approved"
   | "changes_requested"
   | "completed"
+  | "mentor_approved"
 
 export type TaskStatus = "todo" | "in_progress" | "blocked" | "completed"
 export type TaskPriority = "low" | "medium" | "high" | "critical"
@@ -98,6 +101,8 @@ export interface ProjectMilestone {
   progressContribution: number
   submissionDate?: string
   reviewDate?: string
+  plannedDate?: string
+  approvedDate?: string
   reviewStatus?: "pending" | "approved" | "changes_requested"
   mentorFeedback?: string
   studentComments?: string
@@ -120,6 +125,8 @@ export interface StudentTeamMember {
   isTeamLead: boolean
   department?: string
   publicProfileId?: string
+  skills?: string[]
+  responsibilities?: string
 }
 
 export interface StudentProjectParticipant {
@@ -149,6 +156,8 @@ export interface ProjectFacultyMentor {
   currentLoad: number
   maxCapacity?: number
   designation?: string
+  researchDomains?: string[]
+  status?: string
 }
 
 export interface ProjectDocument {
@@ -166,6 +175,56 @@ export interface ProjectDocument {
   description?: string
   downloadUrl: string
   isConfidential?: boolean
+}
+
+export interface ProjectEvidenceItem {
+  id: string
+  milestoneId?: string
+  milestoneTitle?: string
+  fileName: string
+  fileType: string
+  fileSize: string
+  category: "Technical Report" | "Design Document" | "CAD/Schematic" | "Prototype Photograph" | "Test Result" | "Field Data" | "Telemetry" | "Video" | "Other"
+  uploadedBy: string
+  uploadedAt: string
+  downloadUrl?: string
+  reviewStatus?: "pending" | "approved" | "rejected"
+  description?: string
+}
+
+export interface ProjectRiskItem {
+  id: string
+  title: string
+  severity: "low" | "medium" | "high" | "critical"
+  description: string
+  impact: string
+  mitigation: string
+  owner: string
+  targetResolution: string
+  status: "open" | "mitigating" | "resolved"
+}
+
+export interface GovernmentReviewInfo {
+  lastReviewDate?: string
+  reviewStatus: "not_reviewed" | "under_review" | "changes_requested" | "approved"
+  milestoneReviewed?: string
+  feedback?: string
+  requiredChanges?: string
+  nextReviewDate?: string
+}
+
+export interface SelectedSolutionDetails {
+  solutionTitle: string
+  executiveSummary: string
+  technicalApproach: string
+  technologies: string[]
+  expectedImpact: string
+  estimatedBudget: string
+  implementationTimeline: string
+  selectionStatus: "selected" | "sponsored"
+  selectedDate: string
+  reportUrl: string
+  isConfidential: boolean
 }
 
 export interface ProjectActivityEvent {
@@ -226,16 +285,26 @@ export interface StudentProject {
   status: ProjectStatus
   sponsorshipStatus: "unsponsored" | "sponsored"
   sponsorName?: string
+  sponsorType?: string
   sponsorshipGrantAmount?: string
   sponsorshipDate?: string
+  sanctionedBudget: number
+  utilizedBudget: number
+  remainingBudget: number
   startDate: string
   expectedCompletionDate: string
+  objectives: string[]
+  technologies: string[]
   facultyMentor: ProjectFacultyMentor
   studentParticipants: StudentProjectParticipant[]
   teamMembers?: StudentTeamMember[]
   milestones: ProjectMilestone[]
   tasks?: ProjectTask[]
   documents: ProjectDocument[]
+  evidence: ProjectEvidenceItem[]
+  risks: ProjectRiskItem[]
+  governmentReview: GovernmentReviewInfo
+  solutionDetails: SelectedSolutionDetails
   activity: ProjectActivityEvent[]
   mentorFeedback: Array<{
     id: string
@@ -248,4 +317,27 @@ export interface StudentProject {
   }>
   createdAt?: string
   updatedAt?: string
+}
+
+export interface UniversityProjectStats {
+  activeProjects: number
+  sponsoredProjects: number
+  inDevelopment: number
+  pendingMilestones: number
+  nearCompletion: number
+  impactVerified: number
+  totalStudents: number
+  totalFacultyMentors: number
+  averageProgress: number
+}
+
+export interface UniversityProjectFilterQuery {
+  search?: string
+  domain?: string
+  district?: string
+  stage?: ProjectStage | "all"
+  status?: ProjectStatus | "all"
+  mentor?: string
+  sponsor?: string
+  sortBy?: "recently_updated" | "highest_progress" | "lowest_progress" | "most_urgent"
 }

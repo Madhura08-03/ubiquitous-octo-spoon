@@ -51,7 +51,7 @@ const UNIVERSITY_SIDEBAR_SECTIONS: SidebarSection[] = [
       { id: "problems", label: "Open Challenges", href: "/university/problems", icon: FileQuestion, badge: "12" },
       { id: "matching", label: "AI Problem Matching", href: "/university/matching", icon: Sparkles, badge: "6" },
       { id: "proposals", label: "Your Proposals", href: "/university/problems?tab=proposals", icon: Lightbulb, badge: "6" },
-      { id: "projects", label: "Active Capstones", href: "#active-projects", icon: Trophy, badge: "4" },
+      { id: "projects", label: "University Projects", href: "/university/projects", icon: Trophy, badge: "4" },
     ],
   },
   {
